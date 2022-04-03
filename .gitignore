@@ -7,3 +7,8 @@ rng_testbench
 *.dylib
 *.dll
 vls.log
+scratch
+old
+data
+result
+logs
