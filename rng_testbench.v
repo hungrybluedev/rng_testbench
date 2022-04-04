@@ -48,7 +48,7 @@ fn main() {
 				iteration: iteration
 				rng: generators[name]
 			}
-			contexts[name] = context
+			contexts['${name}_$iteration'] = context
 			threads << go evaluate_rng(mut context)
 		}
 	}
