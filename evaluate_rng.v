@@ -14,6 +14,8 @@ mut:
 	logger    log.Log
 	rng       rand.PRNG
 	data_file string
+	ent_norm  f64
+	dhr_score int
 }
 
 fn obtain_logger(name string, iteration int) log.Log {
@@ -31,7 +33,7 @@ fn obtain_logger(name string, iteration int) log.Log {
 fn evaluate_rng(mut context EvaluationContext) {
 	context.logger = obtain_logger(context.name, context.iteration)
 
-	seed_len := context.rng.block_size() / 32
+	seed_len := seed_len_map[context.name]
 	if seed_len > 0 {
 		seed_data := seed.time_seed_array(seed_len)
 		context.rng.seed(seed_data)
@@ -41,10 +43,12 @@ fn evaluate_rng(mut context EvaluationContext) {
 	generate_data_file(mut context)
 
 	store_entropy_results(mut context)
+
+	store_dieharder_results(mut context)
 }
 
 fn generate_data_file(mut context EvaluationContext) {
-	file_path := 'data/$context.name${context.iteration:02}.dat'
+	file_path := 'data/${context.name}_${context.iteration:02}.dat'
 	context.data_file = file_path
 
 	mut data_file := os.open_append(file_path) or {
@@ -111,4 +115,112 @@ fn store_entropy_results(mut context EvaluationContext) {
 	} else {
 		context.logger.info('ent vector norm: $norm')
 	}
+
+	context.ent_norm = norm
+}
+
+struct DieHarderTestCase {
+	number      int
+	description string
+mut:
+	outcome string
+	p_value f64
+}
+
+const dieharder_test_cases = [
+	DieHarderTestCase{
+		number: 0
+		description: 'Diehard "Birthdays" test (modified)'
+	},
+	DieHarderTestCase{
+		number: 1
+		description: 'Diehard Overlapping 5-Permutations Test'
+	},
+	DieHarderTestCase{
+		number: 2
+		description: 'Diehard 32x32 Binary Rank Test'
+	},
+	DieHarderTestCase{
+		number: 3
+		description: 'Diehard 6x8 Binary Rank Test'
+	},
+	DieHarderTestCase{
+		number: 4
+		description: 'Diehard Bitstream Test'
+	},
+	DieHarderTestCase{
+		number: 5
+		description: 'Diehard Overlapping Pairs Sparse Occupancy (OPSO)'
+	},
+	DieHarderTestCase{
+		number: 6
+		description: 'Diehard Overlapping Quadruples Sparse Occupancy (OQSO) Test'
+	},
+	DieHarderTestCase{
+		number: 7
+		description: 'Diehard DNA Test'
+	},
+	DieHarderTestCase{
+		number: 8
+		description: 'Diehard Count the 1s (stream) (modified) Test'
+	},
+	DieHarderTestCase{
+		number: 9
+		description: 'Diehard Count the 1s (byte) (modified) Test'
+	},
+	DieHarderTestCase{
+		number: 10
+		description: 'Diehard Parking Lot Test (modified)'
+	},
+	DieHarderTestCase{
+		number: 11
+		description: 'Diehard Minimum Distance (2d Circle) Test'
+	},
+	DieHarderTestCase{
+		number: 12
+		description: 'Diehard Minimum Distance (3d Sphere) Test'
+	},
+	DieHarderTestCase{
+		number: 13
+		description: 'Diehard Squeeze Test'
+	},
+	DieHarderTestCase{
+		number: 15
+		description: 'Diehard Runs Test'
+	},
+]
+
+fn store_dieharder_results(mut context EvaluationContext) {
+	mut local_test_cases := dieharder_test_cases.clone()
+
+	mut score := 0
+
+	for mut test_case in local_test_cases {
+		result := os.execute_or_panic('dieharder -g 201 -f $context.data_file -d $test_case.number')
+		context.logger.info('Parsing dieharder result for ${test_case.description}...')
+
+		lines := result.output.split_into_lines()
+
+		if lines.len < 9 {
+			context.logger.fatal('Unexpected output from dieharder')
+		}
+
+		tokens := lines.last().split('|').map(it.trim(' '))
+		test_case.p_value = tokens[4].f64()
+		test_case.outcome = tokens[5]
+
+		if test_case.outcome == 'PASSED' {
+			context.logger.info('$test_case.description: PASSED ($test_case.p_value)')
+			score += 2
+		} else {
+			context.logger.warn('$test_case.description: $test_case.outcome ($test_case.p_value)')
+			for result_line in lines {
+				context.logger.warn(result_line)
+			}
+			score += if test_case.outcome == 'WEAK' { 1 } else { -2 }
+		}
+	}
+
+	context.logger.info('dhr score: $score')
+	context.dhr_score = score
 }
