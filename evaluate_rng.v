@@ -15,6 +15,9 @@ mut:
 	rng       rand.PRNG
 	data_file string
 	ent_norm  f64
+	dhr_pass  int
+	dhr_weak  int
+	dhr_fail  int
 	dhr_score int
 }
 
@@ -122,9 +125,6 @@ fn store_entropy_results(mut context EvaluationContext) {
 struct DieHarderTestCase {
 	number      int
 	description string
-mut:
-	outcome string
-	p_value f64
 }
 
 const dieharder_test_cases = [
@@ -191,11 +191,7 @@ const dieharder_test_cases = [
 ]
 
 fn store_dieharder_results(mut context EvaluationContext) {
-	mut local_test_cases := dieharder_test_cases.clone()
-
-	mut score := 0
-
-	for mut test_case in local_test_cases {
+	for test_case in dieharder_test_cases {
 		result := os.execute_or_panic('dieharder -g 201 -f $context.data_file -d $test_case.number')
 		context.logger.info('Parsing dieharder result for ${test_case.description}...')
 
@@ -206,21 +202,29 @@ fn store_dieharder_results(mut context EvaluationContext) {
 		}
 
 		tokens := lines.last().split('|').map(it.trim(' '))
-		test_case.p_value = tokens[4].f64()
-		test_case.outcome = tokens[5]
+		p_value := tokens[4].f64()
+		outcome := tokens[5]
 
-		if test_case.outcome == 'PASSED' {
-			context.logger.info('$test_case.description: PASSED ($test_case.p_value)')
-			score += 2
+		if outcome == 'PASSED' {
+			context.logger.info('$test_case.description: PASSED ($p_value)')
+			context.dhr_pass += 1
 		} else {
-			context.logger.warn('$test_case.description: $test_case.outcome ($test_case.p_value)')
+			context.logger.warn('$test_case.description: $outcome ($p_value)')
 			for result_line in lines {
 				context.logger.warn(result_line)
 			}
-			score += if test_case.outcome == 'WEAK' { 1 } else { -2 }
+			if outcome == 'WEAK' {
+				context.dhr_weak += 1
+			} else {
+				context.dhr_fail += 1
+			}
 		}
 	}
+	context.logger.info('dhr pass: $context.dhr_pass')
+	context.logger.info('dhr weak: $context.dhr_weak')
+	context.logger.info('dhr fail: $context.dhr_fail')
 
+	score := 2 * context.dhr_pass + context.dhr_weak - 2 * context.dhr_fail
 	context.logger.info('dhr score: $score')
 	context.dhr_score = score
 }
