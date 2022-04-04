@@ -10,7 +10,7 @@ import rand.splitmix64
 
 const (
 	iterations            = 10
-	data_file_bytes_count = 512 * 1024 * 1024
+	data_file_bytes_count = 1024 * 1024 * 1024
 	seed_len_map          = {
 		'musl':     musl.seed_len
 		'pcg32':    pcg32.seed_len
