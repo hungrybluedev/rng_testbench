@@ -3,13 +3,20 @@ module main
 import os
 import rand
 import rand.musl
+import rand.pcg32
 import rand.wyrand
 import rand.splitmix64
-import myrngs.cryptorng
+// import myrngs.cryptorng
 
 const (
-	iterations            = 25
-	data_file_bytes_count = 256 * 1024
+	iterations            = 10
+	data_file_bytes_count = 512 * 1024 * 1024
+	seed_len_map          = {
+		'musl':     musl.seed_len
+		'pcg32':    pcg32.seed_len
+		'wyrand':   2
+		'splitmix': splitmix64.seed_len
+	}
 )
 
 fn main() {
@@ -18,10 +25,13 @@ fn main() {
 
 	mut generators := {
 		'musl':     &rand.PRNG(&musl.MuslRNG{})
+		'pcg32':    &rand.PRNG(&pcg32.PCG32RNG{})
+		// Implementation issues. Enable after fix
 		// 'mt19937': &rand.PRNG(&mt19937.MT19937RNG{})
 		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
 		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
-		'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
+		// This takes a long time to run, so use smaller sizes on this
+		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
 	}
 
 	iteration_limit := iterations + 1
@@ -33,7 +43,7 @@ fn main() {
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
-				rng: mut generators[name]
+				rng: generators[name]
 			}
 			threads << go evaluate_rng(mut context)
 		}
