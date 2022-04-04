@@ -3,7 +3,6 @@ module main
 import os
 import rand
 import rand.musl
-import rand.mt19937
 import rand.wyrand
 import rand.splitmix64
 import myrngs.cryptorng
@@ -19,7 +18,7 @@ fn main() {
 
 	mut generators := {
 		'musl':     &rand.PRNG(&musl.MuslRNG{})
-		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
+		// 'mt19937': &rand.PRNG(&mt19937.MT19937RNG{})
 		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
 		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
 		'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
@@ -52,13 +51,27 @@ fn initialize_directories() {
 	}
 }
 
-fn check_external_programs_installed() {
-	commands := ['ent -u', 'dieharder --help']
+struct ExternalTool {
+	name    string
+	command string
+}
 
-	for command in commands {
-		result := os.execute(command)
+fn check_external_programs_installed() {
+	tools := [
+		ExternalTool{
+			name: 'ent'
+			command: 'ent -u'
+		},
+		ExternalTool{
+			name: 'dieharder'
+			command: 'dieharder --help'
+		},
+	]
+
+	for tool in tools {
+		result := os.execute(tool.command)
 		if result.exit_code != 0 {
-			panic('External command "$command" could not be run.')
+			panic('External tool "$tool.name" could not be detected.')
 		}
 	}
 }
