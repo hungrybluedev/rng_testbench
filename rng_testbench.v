@@ -11,6 +11,7 @@ import rand.splitmix64
 const (
 	iterations            = 10
 	data_file_bytes_count = 1024 * 1024 * 1024
+	// data_file_bytes_count = 1024
 	seed_len_map          = {
 		'musl':     musl.seed_len
 		'pcg32':    pcg32.seed_len
@@ -38,6 +39,8 @@ fn main() {
 
 	mut threads := []thread{}
 
+	mut contexts := map[string]&EvaluationContext{}
+
 	for name in generators.keys() {
 		for iteration in 1 .. iteration_limit {
 			mut context := &EvaluationContext{
@@ -45,11 +48,14 @@ fn main() {
 				iteration: iteration
 				rng: generators[name]
 			}
+			contexts[name] = context
 			threads << go evaluate_rng(mut context)
 		}
 	}
 
 	threads.wait()
+
+	generate_report(contexts)
 }
 
 fn initialize_directories() {
