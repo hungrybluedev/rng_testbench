@@ -3,13 +3,14 @@ module main
 import os
 import rand
 import rand.musl
+import rand.mt19937
 import rand.wyrand
 import rand.splitmix64
-import cryptorng
+import myrngs.cryptorng
 
 const (
-	iterations            = 2
-	data_file_bytes_count = 2_000_000
+	iterations            = 25
+	data_file_bytes_count = 256 * 1024
 )
 
 fn main() {
@@ -18,6 +19,7 @@ fn main() {
 
 	mut generators := {
 		'musl':     &rand.PRNG(&musl.MuslRNG{})
+		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
 		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
 		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
 		'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
