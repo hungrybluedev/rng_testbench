@@ -2,9 +2,10 @@ module main
 
 import log
 import math
+import os
 import rand
 import rand.seed
-import os
+import time
 
 struct EvaluationContext {
 	name        string
@@ -19,6 +20,9 @@ mut:
 	dhr_weak  int
 	dhr_fail  int
 	dhr_score int
+	gen_duration time.Duration
+	ent_duration time.Duration
+	dhr_duration time.Duration
 }
 
 fn obtain_logger(name string, iteration int) log.Log {
@@ -62,6 +66,8 @@ fn generate_data_file(mut context EvaluationContext) {
 
 	mut bytes_remaining := data_file_bytes_count
 
+	mut sw := time.new_stopwatch()
+
 	for bytes_remaining > 0 {
 		mut byte_data := context.rng.bytes(if bytes_remaining > context.buffer_size {
 			context.buffer_size
@@ -77,13 +83,22 @@ fn generate_data_file(mut context EvaluationContext) {
 		}
 	}
 
+	context.gen_duration = sw.elapsed()
+
 	context.logger.info('Wrote $data_file_bytes_count bytes to $file_path')
+	context.logger.info('Generation took ${context.gen_duration.seconds()} seconds')
 
 	data_file.close()
 }
 
 fn store_entropy_results(mut context EvaluationContext) {
+	mut sw := time.new_stopwatch()
+
 	result := os.execute_or_panic('ent $context.data_file')
+
+	context.ent_duration = sw.elapsed()
+
+	context.logger.info('Entropy calculation took ${context.ent_duration.seconds()} seconds')
 	context.logger.info('Parsing entropy result...')
 
 	lines := result.output.split_into_lines()
@@ -191,6 +206,8 @@ const dieharder_test_cases = [
 ]
 
 fn store_dieharder_results(mut context EvaluationContext) {
+	mut sw := time.new_stopwatch()
+
 	for test_case in dieharder_test_cases {
 		result := os.execute_or_panic('dieharder -g 201 -f $context.data_file -d $test_case.number')
 		context.logger.info('Parsing dieharder result for ${test_case.description}...')
@@ -220,6 +237,11 @@ fn store_dieharder_results(mut context EvaluationContext) {
 			}
 		}
 	}
+
+	context.dhr_duration = sw.elapsed()
+
+	context.logger.info('Dieharder test suite took ${context.dhr_duration.seconds()} seconds')
+
 	context.logger.info('dhr pass: $context.dhr_pass')
 	context.logger.info('dhr weak: $context.dhr_weak')
 	context.logger.info('dhr fail: $context.dhr_fail')
