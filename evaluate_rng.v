@@ -20,7 +20,6 @@ mut:
 	dhr_weak     int
 	dhr_fail     int
 	dhr_score    int
-	gen_duration time.Duration
 	ent_duration time.Duration
 	dhr_duration time.Duration
 }
@@ -37,7 +36,7 @@ fn obtain_logger(name string, iteration int) log.Log {
 	return logger
 }
 
-fn evaluate_rng(mut context EvaluationContext) {
+fn initialize_rng_data(mut context EvaluationContext) {
 	context.logger = obtain_logger(context.name, context.iteration)
 
 	seed_len := seed_len_map[context.name]
@@ -48,9 +47,10 @@ fn evaluate_rng(mut context EvaluationContext) {
 	}
 
 	generate_data_file(mut context)
+}
 
+fn evaluate_rng(mut context EvaluationContext) {
 	store_entropy_results(mut context)
-
 	store_dieharder_results(mut context)
 }
 
@@ -66,8 +66,6 @@ fn generate_data_file(mut context EvaluationContext) {
 
 	mut bytes_remaining := data_file_bytes_count
 
-	mut sw := time.new_stopwatch()
-
 	for bytes_remaining > 0 {
 		mut byte_data := context.rng.bytes(if bytes_remaining > context.buffer_size {
 			context.buffer_size
@@ -77,16 +75,14 @@ fn generate_data_file(mut context EvaluationContext) {
 			context.logger.fatal('Failed to generate data')
 			exit(1)
 		}
+
 		bytes_remaining -= data_file.write(byte_data) or {
 			context.logger.fatal('Failed to write data')
 			exit(1)
 		}
 	}
 
-	context.gen_duration = sw.elapsed()
-
 	context.logger.info('Wrote $data_file_bytes_count bytes to $file_path')
-	context.logger.info('Generation took $context.gen_duration.seconds() seconds')
 
 	data_file.close()
 }
