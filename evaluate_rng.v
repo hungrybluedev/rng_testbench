@@ -12,14 +12,14 @@ struct EvaluationContext {
 	iteration   int
 	buffer_size int = 2048
 mut:
-	logger    log.Log
-	rng       rand.PRNG
-	data_file string
-	ent_norm  f64
-	dhr_pass  int
-	dhr_weak  int
-	dhr_fail  int
-	dhr_score int
+	logger       log.Log
+	rng          rand.PRNG
+	data_file    string
+	ent_norm     f64
+	dhr_pass     int
+	dhr_weak     int
+	dhr_fail     int
+	dhr_score    int
 	gen_duration time.Duration
 	ent_duration time.Duration
 	dhr_duration time.Duration
@@ -86,7 +86,7 @@ fn generate_data_file(mut context EvaluationContext) {
 	context.gen_duration = sw.elapsed()
 
 	context.logger.info('Wrote $data_file_bytes_count bytes to $file_path')
-	context.logger.info('Generation took ${context.gen_duration.seconds()} seconds')
+	context.logger.info('Generation took $context.gen_duration.seconds() seconds')
 
 	data_file.close()
 }
@@ -98,7 +98,7 @@ fn store_entropy_results(mut context EvaluationContext) {
 
 	context.ent_duration = sw.elapsed()
 
-	context.logger.info('Entropy calculation took ${context.ent_duration.seconds()} seconds')
+	context.logger.info('Entropy calculation took $context.ent_duration.seconds() seconds')
 	context.logger.info('Parsing entropy result...')
 
 	lines := result.output.split_into_lines()
@@ -203,6 +203,42 @@ const dieharder_test_cases = [
 		number: 15
 		description: 'Diehard Runs Test'
 	},
+	DieHarderTestCase{
+		number: 16
+		description: 'Diehard Craps Test'
+	},
+	DieHarderTestCase{
+		number: 100
+		description: 'STS Monobit Test'
+	},
+	DieHarderTestCase{
+		number: 101
+		description: 'STS Runs Test'
+	},
+	DieHarderTestCase{
+		number: 202
+		description: 'RGB Permutations Test'
+	},
+	DieHarderTestCase{
+		number: 203
+		description: 'RGB Lagged Sum Test'
+	},
+	DieHarderTestCase{
+		number: 204
+		description: 'RGB Kolmogorov-Smirnov Test'
+	},
+	DieHarderTestCase{
+		number: 205
+		description: 'DAB Byte Distribution Test'
+	},
+	DieHarderTestCase{
+		number: 206
+		description: 'DAB DCT Test'
+	},
+	DieHarderTestCase{
+		number: 209
+		description: 'DAB Monobit 2 Test'
+	},
 ]
 
 fn store_dieharder_results(mut context EvaluationContext) {
@@ -240,7 +276,7 @@ fn store_dieharder_results(mut context EvaluationContext) {
 
 	context.dhr_duration = sw.elapsed()
 
-	context.logger.info('Dieharder test suite took ${context.dhr_duration.seconds()} seconds')
+	context.logger.info('Dieharder test suite took $context.dhr_duration.seconds() seconds')
 
 	context.logger.info('dhr pass: $context.dhr_pass')
 	context.logger.info('dhr weak: $context.dhr_weak')
