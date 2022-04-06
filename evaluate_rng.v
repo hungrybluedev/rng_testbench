@@ -10,7 +10,7 @@ import time
 struct EvaluationContext {
 	name        string
 	iteration   int
-	buffer_size int = 2048
+	buffer_size int = default_block_size
 mut:
 	logger       log.Log
 	rng          rand.PRNG
