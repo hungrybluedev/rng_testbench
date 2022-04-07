@@ -34,7 +34,6 @@ fn pretty_table_from_csv(path string) ?string {
 	}
 
 	header := lines[0].split(',')
-	max_line_length := arrays.max(lines.map(it.len)) or { panic('Could not find max line length') }
 	column_count := header.len
 
 	mut column_widths := []int{len: column_count, init: header[it].len}
