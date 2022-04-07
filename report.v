@@ -85,33 +85,35 @@ fn pretty_table_from_csv(path string) ?string {
 	return buffer.str()
 }
 
-fn send_mail(timestamp string) ? {
-	html_table := pretty_table_from_csv('results/summary ${timestamp}.csv') ?
-
-	host := 'https://api.elasticemail.com/v2/email/send'
+fn send_detail_report_mail(timestamp string) ? {
+	pretty_table := pretty_table_from_csv('results/summary ${timestamp}.csv') ?
 	subject := 'Experiment Result Summary ($time.now().format())'
-	body := '
+	body := 'Summary of experiment results.
 
-Summary of experiment results.
+Date and Time: $timestamp
 
-Date: $timestamp
-
-General Summary:
-
-$html_table
+$pretty_table
 '
+	send_mail(subject, body) ?
+}
+
+fn send_test_mail() ? {
+	result := os.execute_or_panic('v doctor')
+	body := 'Sample email containing metadata on V installation and hardware information.
+
+Results of "v doctor":
+$result.output
+'
+	send_mail('Test email from RNG Testbench', body) ?
+}
+
+fn send_mail(subject string, body string) ? {
+	host := 'https://api.elasticemail.com/v2/email/send'
 
 	url := '$host?apiKey=$api_key&to=$recipients&from=$from_email&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
 
 	response := http.post_json(url, '{Content-Length: $url.len}') ?
 
 	println(response.text)
-
 	println('Mail sent!')
-
-	// szip.zip_files(['tocompress/sample.text', 'tocompress/next.text'], 'sample.zip') ?
-	// szip.extract_zip_to_dir('sample.zip', 'decompressed') ?
-	// contents := os.read_file('sample.zip') ?
-
-	// os.write_file('sample2.zip', contents) ?
 }

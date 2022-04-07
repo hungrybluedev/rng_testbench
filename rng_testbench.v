@@ -59,7 +59,11 @@ fn main() {
 
 	generator_str := fp.string('generator', `g`, 'all', 'The generator to use. All valid generators are: ${enabled_generators.join(', ')}, all')
 
-	additional_args := fp.finalize() ?
+	additional_args := fp.finalize() or {
+		println('Error: ' + err.str())
+		println(fp.usage())
+		exit(1)
+	}
 
 	if additional_args.len > 0 {
 		println('Unprocessed arguments:\n$additional_args.join_lines()')
@@ -67,7 +71,17 @@ fn main() {
 
 	match mode_str {
 		'default' {
-			println(pretty_table_from_csv('results/summary.csv') ?)
+			// Run all the diagnostic functions before or after a full run
+
+			// First, we check if we have any results to display already:
+			summaries := os.walk_ext('results', 'csv')
+			if summaries.len > 0 {
+				println('Sample summary table output: ')
+				println(pretty_table_from_csv(summaries[0]) ?)
+			}
+
+			// Next, we try to send a sample email
+			send_test_mail() ?
 		}
 		'runall' {
 			println('Running all!')
@@ -75,17 +89,18 @@ fn main() {
 			timestamp := '($time.now().format())'
 
 			run_for_all_generators(timestamp)
-			send_mail(timestamp) ?
+			send_detail_report_mail(timestamp) ?
 		}
 		'target' {
+			println(generator_str)
 			println('Running target!')
 		}
 		else {
 			println('Invalid mode!')
+			println(fp.usage())
+			exit(1)
 		}
 	}
-
-	println(generator_str)
 }
 
 fn run_for_all_generators(timestamp string) {
