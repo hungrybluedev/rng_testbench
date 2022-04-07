@@ -11,10 +11,10 @@ import time
 fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 	mut buffer := strings.new_builder(contexts.len * 100)
 
-	buffer.writeln('Name,Iteration,Entropy Norm,DH Pass,DH Weak,DH Fail,DH Score,Entropy Time (s),DH Time (s)')
+	buffer.writeln('Name,Iteration,Entropy Norm,DH Pass,DH Weak,DH Fail,DH Score,Entropy Time (s),DH Time (s),Burn Time (s)')
 
 	for _, context in contexts {
-		buffer.writeln('$context.name,$context.iteration,${context.ent_norm:.4f},$context.dhr_pass,$context.dhr_weak,$context.dhr_fail,$context.dhr_score,${context.ent_duration.seconds():.4f},${context.dhr_duration.seconds():.4f}')
+		buffer.writeln('$context.name,$context.iteration,${context.ent_norm:.4f},$context.dhr_pass,$context.dhr_weak,$context.dhr_fail,$context.dhr_score,${context.ent_duration.seconds():.4f},${context.dhr_duration.seconds():.4f},${context.burn_duration.seconds():.4f}')
 	}
 
 	os.write_file('results/summary ${timestamp}.csv', buffer.str()) or {
@@ -38,7 +38,6 @@ fn pretty_table_from_csv(path string) ?string {
 	column_count := header.len
 
 	mut column_widths := []int{len: column_count, init: header[it].len}
-	mut buffer := strings.new_builder(lines.len * (max_line_length + column_count * 3))
 
 	for line in lines[1..] {
 		values := line.split(',').map(it.trim_space())
@@ -52,7 +51,10 @@ fn pretty_table_from_csv(path string) ?string {
 		}
 	}
 
-	horizontal_line := '+' + strings.repeat(`-`, max_line_length + column_count * 2 + 4) + '+'
+	single_line_length := arrays.sum(column_widths) ? + (column_count + 1) * 3 - 4
+
+	horizontal_line := '+' + strings.repeat(`-`, single_line_length) + '+'
+	mut buffer := strings.new_builder(lines.len * single_line_length)
 
 	buffer.writeln(horizontal_line)
 
