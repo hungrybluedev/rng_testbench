@@ -1,7 +1,6 @@
 module main
 
 import log
-import math
 import os
 import rand
 import rand.seed
@@ -12,16 +11,17 @@ struct EvaluationContext {
 	iteration   int
 	buffer_size int = default_block_size
 mut:
-	logger       log.Log
-	rng          rand.PRNG
-	data_file    string
-	ent_norm     f64
-	dhr_pass     int
-	dhr_weak     int
-	dhr_fail     int
-	dhr_score    int
-	ent_duration time.Duration
-	dhr_duration time.Duration
+	logger        log.Log
+	rng           rand.PRNG
+	data_file     string
+	ent_norm      f64
+	dhr_pass      int
+	dhr_weak      int
+	dhr_fail      int
+	dhr_score     int
+	ent_duration  time.Duration
+	dhr_duration  time.Duration
+	burn_duration time.Duration
 }
 
 fn obtain_logger(name string, iteration int) log.Log {
@@ -52,6 +52,7 @@ fn initialize_rng_data(mut context EvaluationContext) {
 fn evaluate_rng(mut context EvaluationContext) {
 	store_entropy_results(mut context)
 	store_dieharder_results(mut context)
+	store_burn_results(mut context)
 }
 
 fn generate_data_file(mut context EvaluationContext) {
@@ -85,200 +86,4 @@ fn generate_data_file(mut context EvaluationContext) {
 	context.logger.info('Wrote $data_file_bytes_count bytes to $file_path')
 
 	data_file.close()
-}
-
-fn store_entropy_results(mut context EvaluationContext) {
-	mut sw := time.new_stopwatch()
-
-	result := os.execute_or_panic('ent $context.data_file')
-
-	context.ent_duration = sw.elapsed()
-
-	context.logger.info('Entropy calculation took $context.ent_duration.seconds() seconds')
-	context.logger.info('Parsing entropy result...')
-
-	lines := result.output.split_into_lines()
-
-	if lines.len != 11 {
-		context.logger.fatal('Unexpected output from ent')
-	}
-
-	entropy_value := lines[0][10..].split(' ')[0].f64()
-	compression_value := lines[3].split(' ')[6].f64()
-	chi_square_value := lines[5].split_any(' ,')[7].f64()
-	p_value := lines[6].split(' ')[4].f64() / 100.0
-	mean_value := lines[8].split(' ')[7].f64()
-	pi_error_value := lines[9].split(' ')[8].f64()
-	corr_coef_value := lines[10].split(' ')[4].f64()
-
-	context.logger.info('Entropy per byte: $entropy_value')
-	context.logger.info('Compressibility: $compression_value')
-	context.logger.info('Chi Square: $chi_square_value')
-	context.logger.info('p-value: $p_value')
-	context.logger.info('Mean: $mean_value')
-	context.logger.info('MC Pi error: $pi_error_value')
-	context.logger.info('Correlation coefficient: $corr_coef_value')
-
-	norm := math.sqrt(math.pow(8 - entropy_value, 2) +
-		if p_value < 0.05 || p_value > 0.95 { 1 } else { 0 } +
-		math.pow(math.abs(mean_value - 127.5) / 127.5, 2) + math.pow(pi_error_value / 100.0, 2) +
-		math.abs(corr_coef_value))
-
-	if norm >= 1.0 {
-		context.logger.warn('ent vector norm: $norm')
-	} else {
-		context.logger.info('ent vector norm: $norm')
-	}
-
-	context.ent_norm = norm
-}
-
-struct DieHarderTestCase {
-	number      int
-	description string
-}
-
-const dieharder_test_cases = [
-	DieHarderTestCase{
-		number: 0
-		description: 'Diehard "Birthdays" test (modified)'
-	},
-	DieHarderTestCase{
-		number: 1
-		description: 'Diehard Overlapping 5-Permutations Test'
-	},
-	DieHarderTestCase{
-		number: 2
-		description: 'Diehard 32x32 Binary Rank Test'
-	},
-	DieHarderTestCase{
-		number: 3
-		description: 'Diehard 6x8 Binary Rank Test'
-	},
-	DieHarderTestCase{
-		number: 4
-		description: 'Diehard Bitstream Test'
-	},
-	DieHarderTestCase{
-		number: 5
-		description: 'Diehard Overlapping Pairs Sparse Occupancy (OPSO)'
-	},
-	DieHarderTestCase{
-		number: 6
-		description: 'Diehard Overlapping Quadruples Sparse Occupancy (OQSO) Test'
-	},
-	DieHarderTestCase{
-		number: 7
-		description: 'Diehard DNA Test'
-	},
-	DieHarderTestCase{
-		number: 8
-		description: 'Diehard Count the 1s (stream) (modified) Test'
-	},
-	DieHarderTestCase{
-		number: 9
-		description: 'Diehard Count the 1s (byte) (modified) Test'
-	},
-	DieHarderTestCase{
-		number: 10
-		description: 'Diehard Parking Lot Test (modified)'
-	},
-	DieHarderTestCase{
-		number: 11
-		description: 'Diehard Minimum Distance (2d Circle) Test'
-	},
-	DieHarderTestCase{
-		number: 12
-		description: 'Diehard Minimum Distance (3d Sphere) Test'
-	},
-	DieHarderTestCase{
-		number: 13
-		description: 'Diehard Squeeze Test'
-	},
-	DieHarderTestCase{
-		number: 15
-		description: 'Diehard Runs Test'
-	},
-	DieHarderTestCase{
-		number: 16
-		description: 'Diehard Craps Test'
-	},
-	DieHarderTestCase{
-		number: 100
-		description: 'STS Monobit Test'
-	},
-	DieHarderTestCase{
-		number: 101
-		description: 'STS Runs Test'
-	},
-	DieHarderTestCase{
-		number: 202
-		description: 'RGB Permutations Test'
-	},
-	DieHarderTestCase{
-		number: 203
-		description: 'RGB Lagged Sum Test'
-	},
-	DieHarderTestCase{
-		number: 204
-		description: 'RGB Kolmogorov-Smirnov Test'
-	},
-	DieHarderTestCase{
-		number: 205
-		description: 'DAB Byte Distribution Test'
-	},
-	DieHarderTestCase{
-		number: 206
-		description: 'DAB DCT Test'
-	},
-	DieHarderTestCase{
-		number: 209
-		description: 'DAB Monobit 2 Test'
-	},
-]
-
-fn store_dieharder_results(mut context EvaluationContext) {
-	mut sw := time.new_stopwatch()
-
-	for test_case in dieharder_test_cases {
-		result := os.execute_or_panic('dieharder -g 201 -f $context.data_file -d $test_case.number')
-		context.logger.info('Parsing dieharder result for ${test_case.description}...')
-
-		lines := result.output.split_into_lines()
-
-		if lines.len < 9 {
-			context.logger.fatal('Unexpected output from dieharder')
-		}
-
-		tokens := lines.last().split('|').map(it.trim(' '))
-		p_value := tokens[4].f64()
-		outcome := tokens[5]
-
-		if outcome == 'PASSED' {
-			context.logger.info('$test_case.description: PASSED ($p_value)')
-			context.dhr_pass += 1
-		} else {
-			context.logger.warn('$test_case.description: $outcome ($p_value)')
-			for result_line in lines {
-				context.logger.warn(result_line)
-			}
-			if outcome == 'WEAK' {
-				context.dhr_weak += 1
-			} else {
-				context.dhr_fail += 1
-			}
-		}
-	}
-
-	context.dhr_duration = sw.elapsed()
-
-	context.logger.info('Dieharder test suite took $context.dhr_duration.seconds() seconds')
-
-	context.logger.info('dhr pass: $context.dhr_pass')
-	context.logger.info('dhr weak: $context.dhr_weak')
-	context.logger.info('dhr fail: $context.dhr_fail')
-
-	score := 2 * context.dhr_pass + context.dhr_weak - 2 * context.dhr_fail
-	context.logger.info('dhr score: $score')
-	context.dhr_score = score
 }
