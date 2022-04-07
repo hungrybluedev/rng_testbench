@@ -4,6 +4,7 @@ import os
 import flag
 import time
 import rand
+import rand.mt19937
 import rand.musl
 import rand.pcg32
 import rand.wyrand
@@ -25,13 +26,20 @@ const (
 		panic('Please an environment variable: MAIL_API_KEY')
 	}
 
+	// Burn parameters
+	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).int()
+
+	// Tail end test parameters
+
 	seed_len_map          = {
+		'mt19937':  mt19937.seed_len
 		'musl':     musl.seed_len
 		'pcg32':    pcg32.seed_len
-		'wyrand':   2
+		'wyrand':   wyrand.seed_len
 		'splitmix': splitmix64.seed_len
 	}
 	enabled_generators = [
+		'mt19937',
 		'musl',
 		'pcg32',
 		'wyrand',
@@ -81,7 +89,7 @@ fn main() {
 			}
 
 			// Next, we try to send a sample email
-			send_test_mail() ?
+			// send_test_mail() ?
 		}
 		'runall' {
 			println('Running all!')
@@ -89,7 +97,7 @@ fn main() {
 			timestamp := '($time.now().format())'
 
 			run_for_all_generators(timestamp)
-			send_detail_report_mail(timestamp) ?
+			// send_detail_report_mail(timestamp) ?
 		}
 		'target' {
 			println(generator_str)
@@ -108,7 +116,7 @@ fn run_for_all_generators(timestamp string) {
 		'musl':     &rand.PRNG(&musl.MuslRNG{})
 		'pcg32':    &rand.PRNG(&pcg32.PCG32RNG{})
 		// Implementation issues. Enable after fix
-		// 'mt19937': &rand.PRNG(&mt19937.MT19937RNG{})
+		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
 		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
 		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
 		// This takes a long time to run, so use smaller sizes on this
