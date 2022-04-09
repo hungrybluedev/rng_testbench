@@ -8,7 +8,7 @@ import time
 
 struct EvaluationContext {
 	name        string
-	iteration   int
+	iteration   u64
 	buffer_size int = default_block_size
 mut:
 	logger        log.Log
@@ -24,7 +24,7 @@ mut:
 	burn_duration time.Duration
 }
 
-fn obtain_logger(name string, iteration int) log.Log {
+fn obtain_logger(name string, iteration u64) log.Log {
 	mut logger := log.Log{
 		level: .info
 		output_label: '$name${iteration:02}.log'
@@ -52,7 +52,6 @@ fn initialize_rng_data(mut context EvaluationContext) {
 fn evaluate_rng(mut context EvaluationContext) {
 	store_entropy_results(mut context)
 	store_dieharder_results(mut context)
-	store_burn_results(mut context)
 }
 
 fn generate_data_file(mut context EvaluationContext) {
