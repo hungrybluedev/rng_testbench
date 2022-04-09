@@ -8,13 +8,67 @@ import strings
 import szip
 import time
 
+struct ResultStruct {
+	name string
+mut:
+	ent_norm      f64
+	dhr_pass      int
+	dhr_weak      int
+	dhr_fail      int
+	dhr_score     int
+	ent_duration  f64
+	dhr_duration  f64
+	burn_duration f64
+	burn_speed    f64
+}
+
 fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 	mut buffer := strings.new_builder(contexts.len * 100)
 
-	buffer.writeln('Name,Iteration,Entropy Norm,DH Pass,DH Weak,DH Fail,DH Score,Entropy Time (s),DH Time (s),Burn Time (s)')
+	buffer.writeln('Name,Entropy Norm,DH Pass,DH Weak,DH Fail,DH Score,Entropy Time (s),DH Time (s),Burn Time (s),Burn Speed (MB/s)')
+
+	mut results := map[string]ResultStruct{}
+
+	for name in enabled_generators {
+		results[name] = ResultStruct{
+			name: name
+			ent_norm: 0
+			dhr_pass: 0
+			dhr_weak: 0
+			dhr_fail: 0
+			dhr_score: 0
+			ent_duration: 0
+			dhr_duration: 0
+			burn_duration: 0
+			burn_speed: 0
+		}
+	}
 
 	for _, context in contexts {
-		buffer.writeln('$context.name,$context.iteration,${context.ent_norm:.4f},$context.dhr_pass,$context.dhr_weak,$context.dhr_fail,$context.dhr_score,${context.ent_duration.seconds():.4f},${context.dhr_duration.seconds():.4f},${context.burn_duration.seconds():.4f}')
+		// buffer.writeln('$context.name,$context.iteration,${context.ent_norm:.4f},$context.dhr_pass,$context.dhr_weak,$context.dhr_fail,$context.dhr_score,${context.ent_duration.seconds():.4f},${context.dhr_duration.seconds():.4f},${context.burn_duration.seconds():.4f}')
+		results[context.name].ent_norm += context.ent_norm
+		results[context.name].dhr_pass += context.dhr_pass
+		results[context.name].dhr_weak += context.dhr_weak
+		results[context.name].dhr_fail += context.dhr_fail
+		results[context.name].dhr_score += context.dhr_score
+		results[context.name].ent_duration += context.ent_duration.seconds()
+		results[context.name].dhr_duration += context.dhr_duration.seconds()
+		results[context.name].burn_duration += context.burn_duration.seconds()
+	}
+
+	iterations_f := f64(iterations)
+	burn_iterations_f := f64(burn_iterations)
+
+	for name in enabled_generators {
+		results[name].ent_norm /= iterations_f
+		results[name].ent_duration /= iterations_f
+		results[name].dhr_duration /= iterations_f
+		results[name].burn_duration /= iterations_f
+		results[name].burn_speed = (burn_iterations_f / (1024.0 * 1024.0)) / results[name].burn_duration
+	}
+
+	for name, result in results {
+		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_pass,$result.dhr_weak,$result.dhr_fail,$result.dhr_score,${result.ent_duration:.4f},${result.dhr_duration:.4f},${result.burn_duration:.4f},${result.burn_speed:.4f}')
 	}
 
 	os.write_file('results/summary ${timestamp}.csv', buffer.str()) or {
