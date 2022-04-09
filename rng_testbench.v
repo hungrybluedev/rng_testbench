@@ -13,7 +13,7 @@ import rand.splitmix64
 
 const (
 	// Experiment parameters
-	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '1' }).int()
+	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '1' }).u64()
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '2048' }).int()
 	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '2048' }).int()
 
@@ -27,7 +27,7 @@ const (
 	}
 
 	// Burn parameters
-	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).int()
+	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).u64()
 
 	// Tail end test parameters
 
@@ -39,11 +39,11 @@ const (
 		'splitmix': splitmix64.seed_len
 	}
 	enabled_generators = [
-		'mt19937',
-		'musl',
+		// 'mt19937',
+		// 'musl',
 		'pcg32',
 		'wyrand',
-		'splitmix',
+		// 'splitmix',
 		// 'cryptorng',
 	]
 	program_modes      = [
@@ -83,9 +83,9 @@ fn main() {
 
 			// First, we check if we have any results to display already:
 			summaries := os.walk_ext('results', 'csv')
-			if summaries.len > 0 {
+			for summary in summaries {
 				println('Sample summary table output: ')
-				println(pretty_table_from_csv(summaries[0]) ?)
+				println(pretty_table_from_csv(summary) ?)
 			}
 
 			// Next, we try to send a sample email
@@ -97,7 +97,7 @@ fn main() {
 			timestamp := '($time.now().format())'
 
 			run_for_all_generators(timestamp)
-			// send_detail_report_mail(timestamp) ?
+			send_detail_report_mail(timestamp) ?
 		}
 		'target' {
 			println(generator_str)
@@ -127,8 +127,8 @@ fn run_for_all_generators(timestamp string) {
 
 	mut contexts := map[string]&EvaluationContext{}
 
-	for iteration in 1 .. iteration_limit {
-		for name in enabled_generators {
+	for name in enabled_generators {
+		for iteration in 1 .. iteration_limit {
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
@@ -137,17 +137,22 @@ fn run_for_all_generators(timestamp string) {
 			contexts['${name}_$iteration'] = context
 			initialize_rng_data(mut context)
 		}
-	}
 
-	mut evaluation_threads := []thread{}
+		mut evaluation_threads := []thread{}
 
-	for name in enabled_generators {
 		for iteration in 1 .. iteration_limit {
 			evaluation_threads << go evaluate_rng(mut contexts['${name}_$iteration'])
 		}
-	}
 
-	evaluation_threads.wait()
+		evaluation_threads.wait()
+
+		for iteration in 1 .. iteration_limit {
+			store_burn_results(mut contexts['${name}_$iteration'])
+		}
+
+		os.rmdir_all('data') or {}
+		os.mkdir('data') or {}
+	}
 
 	generate_report(contexts, timestamp)
 }
