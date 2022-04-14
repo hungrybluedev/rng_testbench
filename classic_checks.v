@@ -17,7 +17,7 @@ fn store_classic_test_results(mut context EvaluationContext) {
 		chi_sq_p := st.chi_square_p(chi_sq_value, 255)
 
 		context.logger.info('Chi-square value: $chi_sq_value')
-		context.logger.info('Chi-square p value: $chi_sq_value')
+		context.logger.info('Chi-square p value: $chi_sq_p')
 		if chi_sq_p >= 0.05 && chi_sq_p <= 0.95 {
 			context.chisq_pass++
 			context.logger.info('Chi-square test passed.')
