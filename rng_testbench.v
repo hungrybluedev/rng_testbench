@@ -13,6 +13,7 @@ import rand.sys
 // import myrngs.cryptorng
 // import myrngs.minstd
 import myrngs.xoshiro
+import myrngs.nothing
 
 const (
 	// Experiment parameters
@@ -48,9 +49,10 @@ const (
 		// 'musl',
 		// 'sysrng',
 		'pcg32',
-		// 'wyrand',
-		// 'splitmix',
-		'xoshiro',
+		'wyrand',
+		'splitmix',
+		// 'xoshiro',
+		// 'nothing',
 	]
 	program_modes      = [
 		'default',
@@ -134,6 +136,7 @@ fn run_for_all_generators(timestamp string) {
 		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
 		'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
 		'sysrng':   &rand.PRNG(&sys.SysRNG{})
+		'nothing':  &rand.PRNG(&nothing.NothingRNG{})
 	}
 
 	iteration_limit := iterations + 1
