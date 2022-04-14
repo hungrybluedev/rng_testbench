@@ -11,18 +11,16 @@ import time
 struct ResultStruct {
 	name string
 mut:
-	ent_norm      f64
-	dhr_pass      int
-	dhr_weak      int
-	dhr_fail      int
-	dhr_score     int
-	ent_duration  f64
-	dhr_duration  f64
+	ent_norm f64
+	// dhr_pass      int
+	// dhr_weak      int
+	// dhr_fail      int
+	dhr_score int
+	// ent_duration  f64
+	// dhr_duration  f64
 	burn_duration f64
 	burn_speed    f64
-	chisq_pass    int
-	kolsmir_pass  int
-	serial_pass   int
+	classic_score int
 }
 
 fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
@@ -32,32 +30,23 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 		results[name] = ResultStruct{
 			name: name
 			ent_norm: 0
-			dhr_pass: 0
-			dhr_weak: 0
-			dhr_fail: 0
 			dhr_score: 0
-			ent_duration: 0
-			dhr_duration: 0
 			burn_duration: 0
 			burn_speed: 0
-			chisq_pass: 0
-			kolsmir_pass: 0
-			serial_pass: 0
+			classic_score: 0
 		}
 	}
 
 	for _, context in contexts {
 		results[context.name].ent_norm += context.ent_norm
-		results[context.name].dhr_pass += context.dhr_pass
-		results[context.name].dhr_weak += context.dhr_weak
-		results[context.name].dhr_fail += context.dhr_fail
+		// results[context.name].dhr_pass += context.dhr_pass
+		// results[context.name].dhr_weak += context.dhr_weak
+		// results[context.name].dhr_fail += context.dhr_fail
 		results[context.name].dhr_score += context.dhr_score
-		results[context.name].ent_duration += context.ent_duration.seconds()
-		results[context.name].dhr_duration += context.dhr_duration.seconds()
+		// results[context.name].ent_duration += context.ent_duration.seconds()
+		// results[context.name].dhr_duration += context.dhr_duration.seconds()
 		results[context.name].burn_duration += context.burn_duration.seconds()
-		results[context.name].chisq_pass += context.chisq_pass
-		results[context.name].kolsmir_pass += context.kolsmir_pass
-		results[context.name].serial_pass += context.serial_pass
+		results[context.name].classic_score += context.classic_score
 	}
 
 	iterations_f := f64(iterations)
@@ -65,18 +54,18 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 
 	for name in enabled_generators {
 		results[name].ent_norm /= iterations_f
-		results[name].ent_duration /= iterations_f
-		results[name].dhr_duration /= iterations_f
+		// results[name].ent_duration /= iterations_f
+		// results[name].dhr_duration /= iterations_f
 		results[name].burn_duration /= iterations_f
 		results[name].burn_speed = (burn_iterations_f / (1024.0 * 1024.0)) / results[name].burn_duration
 	}
 
 	mut buffer := strings.new_builder(contexts.len * 100)
 
-	buffer.writeln('Name,Entropy Norm,DH Score,Burn Speed (MB/s),Chi Sq.,Kol.Smir.,Serial')
+	buffer.writeln('Name,Entropy Norm,DH Score,Burn Speed (MB/s),Classic')
 
 	for name, result in results {
-		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_score,${result.burn_speed:.4f},$result.chisq_pass,$result.kolsmir_pass,$result.serial_pass')
+		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_score,${result.burn_speed:.4f},$result.classic_score')
 	}
 
 	os.write_file('results/summary ${timestamp}.csv', buffer.str()) or {

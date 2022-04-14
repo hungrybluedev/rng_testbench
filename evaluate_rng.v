@@ -25,6 +25,7 @@ mut:
 	chisq_pass    int
 	kolsmir_pass  int
 	serial_pass   int
+	classic_score int
 }
 
 fn obtain_logger(name string, iteration u64) log.Log {
