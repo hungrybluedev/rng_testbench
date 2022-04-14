@@ -5,7 +5,8 @@ import util
 import math
 
 const (
-	e_max = 100
+	e_max   = 100
+	e_max_f = f64(e_max)
 )
 
 pub fn kolsmir(mut rng rand.PRNG, n int, skip util.InputType) (f64, f64) {
@@ -18,7 +19,7 @@ pub fn kolsmir(mut rng rand.PRNG, n int, skip util.InputType) (f64, f64) {
 
 	for i in 0 .. stat_tests.e_max {
 		for p in ps {
-			if p <= (f64(i) / f64(stat_tests.e_max)) {
+			if p <= (f64(i) / stat_tests.e_max_f) {
 				z[i]++
 			}
 		}
@@ -28,7 +29,7 @@ pub fn kolsmir(mut rng rand.PRNG, n int, skip util.InputType) (f64, f64) {
 	mut dm := -1.0
 
 	for i in 0 .. stat_tests.e_max {
-		d := (f64(z[i]) / f64(n)) - (f64(i) / f64(stat_tests.e_max))
+		d := (f64(z[i]) / f64(n)) - (f64(i) / stat_tests.e_max_f)
 		if d > 0 {
 			dp = math.max(dp, d)
 		}

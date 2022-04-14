@@ -12,10 +12,11 @@ pub fn chi_square_value(mut rng rand.PRNG, n int, skip util.InputType) f64 {
 	}
 
 	mut v := 0.0
-	mut p := 1.0 / 256.0
+	p := 1.0 / 256.0
+	np := f64(n) * p
 
 	for frequency in bins {
-		v += ((frequency - n * p) * (frequency - n * p)) / (n * p)
+		v += math.pow(frequency - np, 2) / np
 	}
 
 	return v
