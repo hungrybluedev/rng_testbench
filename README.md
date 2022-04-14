@@ -8,7 +8,7 @@ Order of operations:
    iteration.
 2. Run `ent` on the file.
 3. Run all specified `dieharder` tests on the file if `ent` passes.
-4. Burn ~5 billion bytes from each generator, for each iteration. Record the
+4. Burn 1 billion bytes from each generator, for each iteration. Record the
    timings and calculate throughput.
 5. Run one final suite of classical tests on the generator.
 
