@@ -22,6 +22,9 @@ mut:
 	ent_duration  time.Duration
 	dhr_duration  time.Duration
 	burn_duration time.Duration
+	chisq_pass    int
+	kolsmir_pass  int
+	serial_pass   int
 }
 
 fn obtain_logger(name string, iteration u64) log.Log {
@@ -49,7 +52,7 @@ fn initialize_rng_data(mut context EvaluationContext) {
 	generate_data_file(mut context)
 }
 
-fn evaluate_rng(mut context EvaluationContext) {
+fn evaluate_rng_file(mut context EvaluationContext) {
 	store_entropy_results(mut context)
 	store_dieharder_results(mut context)
 }

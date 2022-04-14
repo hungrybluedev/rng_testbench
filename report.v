@@ -20,13 +20,12 @@ mut:
 	dhr_duration  f64
 	burn_duration f64
 	burn_speed    f64
+	chisq_pass    int
+	kolsmir_pass  int
+	serial_pass   int
 }
 
 fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
-	mut buffer := strings.new_builder(contexts.len * 100)
-
-	buffer.writeln('Name,Entropy Norm,DH Pass,DH Weak,DH Fail,DH Score,Entropy Time (s),DH Time (s),Burn Time (s),Burn Speed (MB/s)')
-
 	mut results := map[string]ResultStruct{}
 
 	for name in enabled_generators {
@@ -41,6 +40,9 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 			dhr_duration: 0
 			burn_duration: 0
 			burn_speed: 0
+			chisq_pass: 0
+			kolsmir_pass: 0
+			serial_pass: 0
 		}
 	}
 
@@ -53,6 +55,9 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 		results[context.name].ent_duration += context.ent_duration.seconds()
 		results[context.name].dhr_duration += context.dhr_duration.seconds()
 		results[context.name].burn_duration += context.burn_duration.seconds()
+		results[context.name].chisq_pass += context.chisq_pass
+		results[context.name].kolsmir_pass += context.kolsmir_pass
+		results[context.name].serial_pass += context.serial_pass
 	}
 
 	iterations_f := f64(iterations)
@@ -66,8 +71,12 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 		results[name].burn_speed = (burn_iterations_f / (1024.0 * 1024.0)) / results[name].burn_duration
 	}
 
+	mut buffer := strings.new_builder(contexts.len * 100)
+
+	buffer.writeln('Name,Entropy Norm,DH Score,Burn Speed (MB/s),Chi Sq.,Kol.Smir.,Serial')
+
 	for name, result in results {
-		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_pass,$result.dhr_weak,$result.dhr_fail,$result.dhr_score,${result.ent_duration:.4f},${result.dhr_duration:.4f},${result.burn_duration:.4f},${result.burn_speed:.4f}')
+		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_score,${result.burn_speed:.4f},$result.chisq_pass,$result.kolsmir_pass,$result.serial_pass')
 	}
 
 	os.write_file('results/summary ${timestamp}.csv', buffer.str()) or {

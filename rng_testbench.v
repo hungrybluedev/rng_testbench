@@ -9,7 +9,10 @@ import rand.musl
 import rand.pcg32
 import rand.wyrand
 import rand.splitmix64
+import rand.sys
 // import myrngs.cryptorng
+// import myrngs.minstd
+import myrngs.xoshiro
 
 const (
 	// Experiment parameters
@@ -17,34 +20,37 @@ const (
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '2048' }).int()
 	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '2048' }).int()
 
-	// Mail Notification parameters
-	from_email            = os.getenv_opt('MAIL_FROM') or { panic('Please set the sender email.') }
-	recipients            = os.getenv_opt('MAIL_TO') or {
-		panic('Please set the recipient email(s).')
+	// Mail Notification
+	system_name           = os.getenv_opt('SYSTEM_NAME') or {
+		panic('Please set the SYSTEM_NAME environment variable.')
 	}
-	api_key               = os.getenv_opt('MAIL_API_KEY') or {
-		panic('Please an environment variable: MAIL_API_KEY')
-	}
+	from_email            = os.getenv_opt('MAIL_FROM') or { 'unset_from_email' }
+	recipients            = os.getenv_opt('MAIL_TO') or { 'unset_recipients' }
+	api_key               = os.getenv_opt('MAIL_API_KEY') or { 'unset_api_key' }
 
 	// Burn parameters
 	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).u64()
 
 	// Tail end test parameters
+	classic_iterations    = (os.getenv_opt('EXPERIMENT_CLASSIC_ITERATIONS') or { '500000' }).int()
 
 	seed_len_map          = {
 		'mt19937':  mt19937.seed_len
 		'musl':     musl.seed_len
+		'sysrng':   sys.seed_len
 		'pcg32':    pcg32.seed_len
 		'wyrand':   wyrand.seed_len
 		'splitmix': splitmix64.seed_len
+		'xoshiro':  xoshiro.seed_len
 	}
 	enabled_generators = [
 		// 'mt19937',
 		// 'musl',
+		// 'sysrng',
 		'pcg32',
-		'wyrand',
+		// 'wyrand',
 		// 'splitmix',
-		// 'cryptorng',
+		'xoshiro',
 	]
 	program_modes      = [
 		'default',
@@ -89,7 +95,9 @@ fn main() {
 			}
 
 			// Next, we try to send a sample email
-			// send_test_mail() ?
+			if api_key != 'unset_api_key' {
+				send_test_mail() ?
+			}
 		}
 		'runall' {
 			println('Running all!')
@@ -97,7 +105,10 @@ fn main() {
 			timestamp := '($time.now().format())'
 
 			run_for_all_generators(timestamp)
-			send_detail_report_mail(timestamp) ?
+
+			if api_key != 'unset_api_key' {
+				send_detail_report_mail(timestamp) ?
+			}
 		}
 		'target' {
 			println(generator_str)
@@ -121,6 +132,8 @@ fn run_for_all_generators(timestamp string) {
 		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
 		// This takes a long time to run, so use smaller sizes on this
 		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
+		'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
+		'sysrng':   &rand.PRNG(&sys.SysRNG{})
 	}
 
 	iteration_limit := iterations + 1
@@ -141,13 +154,17 @@ fn run_for_all_generators(timestamp string) {
 		mut evaluation_threads := []thread{}
 
 		for iteration in 1 .. iteration_limit {
-			evaluation_threads << go evaluate_rng(mut contexts['${name}_$iteration'])
+			evaluation_threads << go evaluate_rng_file(mut contexts['${name}_$iteration'])
 		}
 
 		evaluation_threads.wait()
 
 		for iteration in 1 .. iteration_limit {
 			store_burn_results(mut contexts['${name}_$iteration'])
+		}
+
+		for iteration in 1 .. iteration_limit {
+			store_classic_test_results(mut contexts['${name}_$iteration'])
 		}
 
 		os.rmdir_all('data') or {}
