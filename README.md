@@ -14,10 +14,15 @@ Order of operations:
 
 ## Prerequisites
 
-1. It needs to be run on a Linux system.
-2. Make sure that `ent` and `dieharder` are installed.
+1. It needs to be run on a system that can install `ent` and `dieharder`.
+   `time` is also recommended, but not necessary.
+2. Install `ent` and `dieharder` from the package manager if available.
+   Otherwise, refer to their respective repositories:
+   [ent](https://github.com/jj1bdx/ent) and
+   [dieharder](https://github.com/seehuhn/dieharder).
 3. Modify `.env.sample` to create an `.env` file. Then run `source .env` to
-   load the environment variables.
+   load the environment variables. (This works on Unix-based systems,
+   so the analogous process needs to be followed on Windows).
 
 ## Usage
 
