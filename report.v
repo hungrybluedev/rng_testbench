@@ -45,7 +45,6 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 	}
 
 	for _, context in contexts {
-		// buffer.writeln('$context.name,$context.iteration,${context.ent_norm:.4f},$context.dhr_pass,$context.dhr_weak,$context.dhr_fail,$context.dhr_score,${context.ent_duration.seconds():.4f},${context.dhr_duration.seconds():.4f},${context.burn_duration.seconds():.4f}')
 		results[context.name].ent_norm += context.ent_norm
 		results[context.name].dhr_pass += context.dhr_pass
 		results[context.name].dhr_weak += context.dhr_weak
@@ -75,7 +74,8 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 		panic('Failed to write summary file')
 	}
 
-	szip.zip_files(os.walk_ext('logs', 'log'), 'results/logs ${timestamp}.zip') or {
+	println('Results written...')
+	szip.zip_files(dump(os.walk_ext('logs', 'log')), 'results/logs ${timestamp}.zip') or {
 		panic('Failed to zip logs')
 	}
 }
@@ -143,7 +143,7 @@ fn pretty_table_from_csv(path string) ?string {
 fn send_detail_report_mail(timestamp string) ? {
 	pretty_table := pretty_table_from_csv('results/summary ${timestamp}.csv') ?
 	subject := 'Experiment Result Summary ($time.now().format())'
-	body := 'Summary of experiment results.
+	body := 'Summary of experiment results on $system_name
 
 Date and Time: $timestamp
 
@@ -155,7 +155,7 @@ $pretty_table
 fn send_test_mail() ? {
 	result := os.execute_or_panic('v doctor')
 	body := 'Sample email containing metadata on V installation and hardware information.
-
+System: $system_name
 Results of "v doctor":
 $result.output
 '
