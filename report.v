@@ -73,6 +73,9 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 	}
 
 	println('Results written...')
+
+	time.sleep(2000)
+
 	szip.zip_files(dump(os.walk_ext('logs', 'log')), 'results/logs ${timestamp}.zip') or {
 		panic('Failed to zip logs')
 	}
