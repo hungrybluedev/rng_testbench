@@ -33,7 +33,7 @@ Uncomment the required generators in the `enabled_generators` array in
 
 It is recommended to use `v -gc boehm -prod .` to compile the program.
 
-Then run it using `time ./rng_testbench`
+Then run it using `time ./rng_testbench --mode runall`
 
 **NOTE:** If all iterations are set, each RNG takes over 10 minutes to test
 (using `-prod`).
