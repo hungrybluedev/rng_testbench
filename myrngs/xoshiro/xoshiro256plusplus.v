@@ -6,8 +6,8 @@ pub const seed_len = 8
 
 pub struct X256PlusPlusRNG {
 mut:
-	state []u64 = [seed.time_seed_64(), seed.time_seed_64(), seed.time_seed_64(),
-	seed.time_seed_64()]
+	state [4]u64 = [seed.time_seed_64(), seed.time_seed_64(), seed.time_seed_64(),
+	seed.time_seed_64()]!
 	buffer     u64
 	bytes_left int
 }
@@ -17,10 +17,10 @@ pub fn (mut rng X256PlusPlusRNG) seed(seed_data []u32) {
 	if seed_data.len != xoshiro.seed_len {
 		panic('seed data must have 8 elements')
 	}
-	rng.state[0] = u64(seed_data[0]) | (u64(seed_data[1]) << 32)
-	rng.state[1] = u64(seed_data[2]) | (u64(seed_data[3]) << 32)
-	rng.state[2] = u64(seed_data[4]) | (u64(seed_data[5]) << 32)
-	rng.state[3] = u64(seed_data[6]) | (u64(seed_data[7]) << 32)
+	rng.state[0] = u64(seed_data[0]) ^ (u64(seed_data[1]) << 32)
+	rng.state[1] = u64(seed_data[2]) ^ (u64(seed_data[3]) << 32)
+	rng.state[2] = u64(seed_data[4]) ^ (u64(seed_data[5]) << 32)
+	rng.state[3] = u64(seed_data[6]) ^ (u64(seed_data[7]) << 32)
 	rng.bytes_left = 0
 	rng.buffer = 0
 }
