@@ -120,22 +120,28 @@ fn store_dieharder_results(mut context EvaluationContext) {
 			context.logger.fatal('Unexpected output from dieharder')
 		}
 
-		tokens := lines.last().split('|').map(it.trim(' '))
-		p_value := tokens[4].f64()
-		outcome := tokens[5]
+		result_lines := lines.filter(it.contains('PASSED') || it.contains('FAILED')
+			|| it.contains('WEAK'))
 
-		if outcome == 'PASSED' {
-			context.logger.info('$test_case.description: PASSED ($p_value)')
-			context.dhr_pass += 1
-		} else {
-			context.logger.warn('$test_case.description: $outcome ($p_value)')
-			for result_line in lines {
-				context.logger.warn(result_line)
-			}
-			if outcome == 'WEAK' {
-				context.dhr_weak += 1
+		for result_line in result_lines {
+			tokens := result_line.split('|').map(it.trim(' '))
+			p_value := tokens[4].f64()
+			outcome := tokens[5]
+
+			context.logger.info(result_line)
+			if outcome == 'PASSED' {
+				context.logger.info('$test_case.description: PASSED ($p_value)')
+				context.dhr_pass += 1
 			} else {
-				context.dhr_fail += 1
+				context.logger.warn('$test_case.description: $outcome ($p_value)')
+				for output_line in lines {
+					context.logger.warn(output_line)
+				}
+				if outcome == 'WEAK' {
+					context.dhr_weak += 1
+				} else {
+					context.dhr_fail += 1
+				}
 			}
 		}
 	}
