@@ -43,14 +43,14 @@ const (
 		'xoshiro':  xoshiro.seed_len
 	}
 	enabled_generators = [
-		// 'mt19937',
-		// 'musl',
-		// 'sysrng',
+		'mt19937',
+		'musl',
+		'sysrng',
 		'pcg32',
 		'wyrand',
 		'splitmix',
-		// 'xoshiro',
-		// 'nothing',
+		'xoshiro',
+		'nothing',
 	]
 	program_modes      = [
 		'default',
