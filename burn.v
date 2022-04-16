@@ -6,7 +6,7 @@ fn store_burn_results(mut context EvaluationContext) {
 	mut sw := time.new_stopwatch()
 
 	for _ in 0 .. burn_iterations {
-		context.rng.byte()
+		context.rng.u8()
 	}
 
 	context.burn_duration = sw.elapsed()

@@ -17,14 +17,12 @@ import myrngs.nothing
 
 const (
 	// Experiment parameters
-	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '1' }).u64()
+	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '4' }).u64()
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '2048' }).int()
-	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '2048' }).int()
+	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '4096' }).int()
 
 	// Mail Notification
-	system_name           = os.getenv_opt('SYSTEM_NAME') or {
-		panic('Please set the SYSTEM_NAME environment variable.')
-	}
+	system_name           = os.getenv_opt('SYSTEM_NAME') or { default_system_name() }
 	from_email            = os.getenv_opt('MAIL_FROM') or { 'unset_from_email' }
 	recipients            = os.getenv_opt('MAIL_TO') or { 'unset_recipients' }
 	api_key               = os.getenv_opt('MAIL_API_KEY') or { 'unset_api_key' }
@@ -33,7 +31,7 @@ const (
 	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).u64()
 
 	// Tail end test parameters
-	classic_iterations    = (os.getenv_opt('EXPERIMENT_CLASSIC_ITERATIONS') or { '500000' }).int()
+	classic_iterations    = (os.getenv_opt('EXPERIMENT_CLASSIC_ITERATIONS') or { '100000' }).int()
 
 	seed_len_map          = {
 		'mt19937':  mt19937.seed_len
@@ -187,6 +185,11 @@ fn initialize_directories() {
 		}
 		os.mkdir(directory) or {}
 	}
+}
+
+fn default_system_name() string {
+	details := os.uname()
+	return '${details.sysname}_$details.machine'
 }
 
 struct ExternalTool {
