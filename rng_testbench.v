@@ -28,7 +28,7 @@ const (
 	api_key               = os.getenv_opt('MAIL_API_KEY') or { 'unset_api_key' }
 
 	// Burn parameters
-	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '500000' }).u64()
+	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '5000000' }).u64()
 
 	// Tail end test parameters
 	classic_iterations    = (os.getenv_opt('EXPERIMENT_CLASSIC_ITERATIONS') or { '100000' }).int()
@@ -207,6 +207,10 @@ fn check_external_programs_installed() {
 			name: 'dieharder'
 			command: 'dieharder --help'
 		},
+		ExternalTool{
+			name: 'zip'
+			command: 'zip --help'
+		}
 	]
 
 	for tool in tools {
