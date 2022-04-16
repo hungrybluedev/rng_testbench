@@ -11,19 +11,22 @@ import time
 struct ResultStruct {
 	name string
 mut:
-	ent_norm f64
-	// dhr_pass      int
-	// dhr_weak      int
-	// dhr_fail      int
-	dhr_score int
-	// ent_duration  f64
-	// dhr_duration  f64
+	ent_norm      f64
+	dhr_score     int
 	burn_duration f64
 	burn_speed    f64
 	classic_score int
 }
 
-fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
+[params]
+struct OutputOptions {
+	report_ent     bool = true
+	report_dhr     bool = true
+	report_burn    bool = true
+	report_classic bool = true
+}
+
+fn generate_report(contexts map[string]&EvaluationContext, timestamp string, output OutputOptions) {
 	mut results := map[string]ResultStruct{}
 
 	for name in enabled_generators {
@@ -62,10 +65,46 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 
 	mut buffer := strings.new_builder(contexts.len * 100)
 
-	buffer.writeln('Name,Entropy Norm,DH Score,Burn Speed (MB/s),Classic')
+	buffer.write_string('Name')
+
+	if output.report_ent {
+		buffer.write_string(',Entropy Norm')
+	}
+
+	if output.report_dhr {
+		buffer.write_string(',DH Score')
+	}
+
+	if output.report_burn {
+		buffer.write_string(',Burn Speed (MB/s)')
+	}
+
+	if output.report_classic {
+		buffer.write_string(',Classic')
+	}
+
+	buffer.writeln('')
 
 	for name, result in results {
-		buffer.writeln('$name,${result.ent_norm:.4f},$result.dhr_score,${result.burn_speed:.4f},$result.classic_score')
+		buffer.write_string('$name')
+
+		if output.report_ent {
+			buffer.write_string(',${result.ent_norm:.4f}')
+		}
+
+		if output.report_dhr {
+			buffer.write_string(',$result.dhr_score')
+		}
+
+		if output.report_burn {
+			buffer.write_string(',${result.burn_speed:.4f}')
+		}
+
+		if output.report_classic {
+			buffer.write_string(',$result.classic_score')
+		}
+
+		buffer.writeln('')
 	}
 
 	os.write_file('results/summary ${timestamp}.csv', buffer.str()) or {
