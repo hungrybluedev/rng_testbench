@@ -12,4 +12,7 @@ fn store_burn_results(mut context EvaluationContext) {
 	context.burn_duration = sw.elapsed()
 
 	context.logger.info('Burning $burn_iterations bytes took $context.burn_duration.seconds() seconds')
+
+	output := context.rng.string(10)
+	context.logger.info('Sample string after burn: $output')
 }
