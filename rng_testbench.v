@@ -18,6 +18,7 @@ import myrngs.nothing
 const (
 	// Experiment parameters
 	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '4' }).u64()
+	iteration_limit       = iterations + 1
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '2048' }).int()
 	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '4096' }).int()
 
@@ -53,9 +54,9 @@ const (
 		'nothing',
 	]
 	program_modes      = [
-		'default',
+		'report',
 		'runall',
-		'target',
+		'burn',
 	]
 )
 
@@ -69,9 +70,7 @@ fn main() {
 	fp.description('A reliable CLI utility to measure the performance of various random number generators.')
 	fp.skip_executable()
 
-	mode_str := fp.string('mode', `m`, 'default', 'The mode to run this program in. All valid modes are: ${program_modes.join(', ')}')
-
-	generator_str := fp.string('generator', `g`, 'all', 'The generator to use. All valid generators are: ${enabled_generators.join(', ')}, all')
+	mode_str := fp.string('mode', `m`, 'report', 'The mode to run this program in. All valid modes are: ${program_modes.join(', ')}')
 
 	additional_args := fp.finalize() or {
 		println('Error: ' + err.str())
@@ -83,8 +82,24 @@ fn main() {
 		println('Unprocessed arguments:\n$additional_args.join_lines()')
 	}
 
+	mut generators := {
+		'musl':     &rand.PRNG(&musl.MuslRNG{})
+		'pcg32':    &rand.PRNG(&pcg32.PCG32RNG{})
+		// Implementation issues. Enable after fix
+		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
+		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
+		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
+		// This takes a long time to run, so use smaller sizes on this
+		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
+		'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
+		'sysrng':   &rand.PRNG(&sys.SysRNG{})
+		'nothing':  &rand.PRNG(&nothing.NothingRNG{})
+	}
+
+	timestamp := '($time.now().format())'
+
 	match mode_str {
-		'default' {
+		'report' {
 			// Run all the diagnostic functions before or after a full run
 
 			// First, we check if we have any results to display already:
@@ -102,17 +117,20 @@ fn main() {
 		'runall' {
 			println('Running all!')
 
-			timestamp := '($time.now().format())'
-
-			run_for_all_generators(timestamp)
+			run_for_all_generators(generators, timestamp)
 
 			if api_key != 'unset_api_key' {
 				send_detail_report_mail(timestamp) ?
 			}
 		}
-		'target' {
-			println(generator_str)
-			println('Running target!')
+		'burn' {
+			println('Measuring throughput of all enabled generators...')
+
+			run_burn_for_all_generators(generators, timestamp)
+
+			if api_key != 'unset_api_key' {
+				send_detail_report_mail(timestamp) ?
+			}
 		}
 		else {
 			println('Invalid mode!')
@@ -122,23 +140,7 @@ fn main() {
 	}
 }
 
-fn run_for_all_generators(timestamp string) {
-	mut generators := {
-		'musl':     &rand.PRNG(&musl.MuslRNG{})
-		'pcg32':    &rand.PRNG(&pcg32.PCG32RNG{})
-		// Implementation issues. Enable after fix
-		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
-		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
-		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
-		// This takes a long time to run, so use smaller sizes on this
-		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
-		'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
-		'sysrng':   &rand.PRNG(&sys.SysRNG{})
-		'nothing':  &rand.PRNG(&nothing.NothingRNG{})
-	}
-
-	iteration_limit := iterations + 1
-
+fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 	mut contexts := map[string]&EvaluationContext{}
 
 	for name in enabled_generators {
@@ -173,6 +175,34 @@ fn run_for_all_generators(timestamp string) {
 	}
 
 	generate_report(contexts, timestamp)
+}
+
+fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
+	mut contexts := map[string]&EvaluationContext{}
+
+	for name in enabled_generators {
+		for iteration in 1 .. iteration_limit {
+			mut context := &EvaluationContext{
+				name: name
+				iteration: iteration
+				rng: generators[name]
+			}
+			contexts['${name}_$iteration'] = context
+			initialize_rng_data(mut context)
+		}
+
+		for iteration in 1 .. iteration_limit {
+			store_burn_results(mut contexts['${name}_$iteration'])
+		}
+	}
+
+	output_options := OutputOptions{
+		report_ent: false
+		report_dhr: false
+		report_classic: false
+	}
+
+	generate_report(contexts, timestamp, output_options)
 }
 
 fn initialize_directories() {
@@ -210,7 +240,7 @@ fn check_external_programs_installed() {
 		ExternalTool{
 			name: 'zip'
 			command: 'zip --help'
-		}
+		},
 	]
 
 	for tool in tools {
