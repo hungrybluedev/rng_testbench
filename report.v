@@ -5,7 +5,7 @@ import net.http
 import net.urllib
 import os
 import strings
-import szip
+// import szip
 import time
 
 struct ResultStruct {
@@ -76,9 +76,10 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string) {
 
 	time.sleep(2000)
 
-	szip.zip_files(dump(os.walk_ext('logs', 'log')), 'results/logs ${timestamp}.zip') or {
-		panic('Failed to zip logs')
-	}
+	// szip.zip_files(dump(os.walk_ext('logs', 'log')), 'results/logs ${timestamp}.zip') or {
+	// 	panic('Failed to zip logs')
+	// }
+	os.execute_or_panic('zip -r "results/logs ${timestamp}.zip" -r logs')
 }
 
 fn pretty_table_from_csv(path string) ?string {
