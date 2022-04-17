@@ -19,8 +19,8 @@ const (
 	// Experiment parameters
 	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '4' }).u64()
 	iteration_limit       = iterations + 1
-	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '2048' }).int()
-	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '4096' }).int()
+	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '4096' }).int()
+	default_block_size    = (os.getenv_opt('EXPERIMENT_BLOCK_SIZE') or { '2048' }).int()
 
 	// Mail Notification
 	system_name           = os.getenv_opt('SYSTEM_NAME') or { default_system_name() }
@@ -29,7 +29,7 @@ const (
 	api_key               = os.getenv_opt('MAIL_API_KEY') or { 'unset_api_key' }
 
 	// Burn parameters
-	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '5000000' }).u64()
+	burn_iterations       = (os.getenv_opt('EXPERIMENT_BURN_ITERATIONS') or { '5000000000' }).u64()
 
 	// Tail end test parameters
 	classic_iterations    = (os.getenv_opt('EXPERIMENT_CLASSIC_ITERATIONS') or { '100000' }).int()
@@ -201,7 +201,9 @@ fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp strin
 		}
 
 		for name in enabled_generators_local {
-			store_burn_results(mut contexts['${name}_$iteration'])
+			mut context :=contexts['${name}_$iteration']
+			store_burn_results(mut context)
+			context.logger.flush()
 		}
 	}
 
