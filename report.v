@@ -16,6 +16,8 @@ mut:
 	burn_duration f64
 	burn_speed    f64
 	classic_score int
+	classic_count int
+	classic_frac f64
 }
 
 [params]
@@ -50,6 +52,7 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 		// results[context.name].dhr_duration += context.dhr_duration.seconds()
 		results[context.name].burn_duration += context.burn_duration.seconds()
 		results[context.name].classic_score += context.classic_score
+		results[context.name].classic_count += context.classic_count
 	}
 
 	iterations_f := f64(iterations)
@@ -57,10 +60,9 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 
 	for name in enabled_generators {
 		results[name].ent_norm /= iterations_f
-		// results[name].ent_duration /= iterations_f
-		// results[name].dhr_duration /= iterations_f
 		results[name].burn_duration /= iterations_f
 		results[name].burn_speed = (burn_iterations_f / (1024.0 * 1024.0)) / results[name].burn_duration
+		results[name].classic_frac = f64(results[name].classic_score) / f64(results[name].classic_count)
 	}
 
 	mut buffer := strings.new_builder(contexts.len * 100)
@@ -101,7 +103,7 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 		}
 
 		if output.report_classic {
-			buffer.write_string(',$result.classic_score')
+			buffer.write_string(',${result.classic_frac:.4f}')
 		}
 
 		buffer.writeln('')
