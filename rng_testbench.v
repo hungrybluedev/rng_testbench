@@ -152,6 +152,7 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 			}
 			contexts['${name}_$iteration'] = context
 			initialize_rng_data(mut context)
+			generate_data_file(mut context)
 		}
 
 		mut evaluation_threads := []thread{}

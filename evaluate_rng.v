@@ -53,7 +53,6 @@ fn initialize_rng_data(mut context EvaluationContext) {
 }
 
 fn evaluate_rng_file(mut context EvaluationContext) {
-	generate_data_file(mut context)
 	store_entropy_results(mut context)
 	if context.ent_norm < 1.0 {
 		store_dieharder_results(mut context)
