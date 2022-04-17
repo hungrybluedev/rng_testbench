@@ -143,8 +143,12 @@ fn main() {
 fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 	mut contexts := map[string]&EvaluationContext{}
 
-	for name in enabled_generators {
-		for iteration in 1 .. iteration_limit {
+	for iteration in 1 .. iteration_limit {
+		enabled_generators_local := rand.shuffle_clone(enabled_generators) or {
+			panic('Internal error: could not shuffle array. Please file a bug report.')
+		}
+
+		for name in enabled_generators_local {
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
@@ -157,17 +161,17 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 
 		mut evaluation_threads := []thread{}
 
-		for iteration in 1 .. iteration_limit {
+		for name in enabled_generators_local {
 			evaluation_threads << go evaluate_rng_file(mut contexts['${name}_$iteration'])
 		}
 
 		evaluation_threads.wait()
 
-		for iteration in 1 .. iteration_limit {
+		for name in enabled_generators_local {
 			store_burn_results(mut contexts['${name}_$iteration'])
 		}
 
-		for iteration in 1 .. iteration_limit {
+		for name in enabled_generators_local {
 			store_classic_test_results(mut contexts['${name}_$iteration'])
 		}
 
@@ -181,8 +185,12 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 	mut contexts := map[string]&EvaluationContext{}
 
-	for name in enabled_generators {
-		for iteration in 1 .. iteration_limit {
+	for iteration in 1 .. iteration_limit {
+		enabled_generators_local := rand.shuffle_clone(enabled_generators) or {
+			panic('Internal error: could not shuffle array. Please file a bug report.')
+		}
+
+		for name in enabled_generators_local {
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
@@ -192,7 +200,7 @@ fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp strin
 			initialize_rng_data(mut context)
 		}
 
-		for iteration in 1 .. iteration_limit {
+		for name in enabled_generators_local {
 			store_burn_results(mut contexts['${name}_$iteration'])
 		}
 	}
