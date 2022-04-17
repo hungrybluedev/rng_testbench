@@ -17,7 +17,7 @@ mut:
 	burn_speed    f64
 	classic_score int
 	classic_count int
-	classic_frac f64
+	classic_frac  f64
 }
 
 [params]
