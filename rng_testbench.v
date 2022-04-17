@@ -247,7 +247,8 @@ fn check_external_programs_installed() {
 	for tool in tools {
 		result := os.execute(tool.command)
 		if result.exit_code != 0 {
-			panic('External tool "$tool.name" could not be detected.')
+			println('External tool "$tool.name" could not be detected. Please install it.')
+			exit(1)
 		}
 	}
 }
