@@ -7,6 +7,9 @@ pub fn next(mut rng rand.PRNG, skip InputType) u8 {
 		.one_byte {
 			return rng.u8()
 		}
+		.upper_u16 {
+			return u8(rng.u16() >> 8)
+		}
 		.upper_u32 {
 			return u8(rng.u32() >> 24)
 		}
@@ -14,7 +17,7 @@ pub fn next(mut rng rand.PRNG, skip InputType) u8 {
 			return u8(rng.u64() >> 56)
 		}
 		.fraction {
-			return u8(rng.f64() * 256)
+			return u8(rng.f64n(256.0) or { 0 })
 		}
 	}
 }
