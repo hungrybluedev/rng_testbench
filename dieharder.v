@@ -111,12 +111,17 @@ fn store_dieharder_results(mut context EvaluationContext) {
 	mut sw := time.new_stopwatch()
 
 	for test_case in dieharder_test_cases {
-		result := os.execute_or_panic('dieharder -g 201 -f $context.data_file -d $test_case.number')
+		cmd := 'dieharder -g 201 -f $context.data_file -d $test_case.number'
+		context.logger.info('run dieharder with: $cmd')
+		result := os.execute_or_panic(cmd)
 		context.logger.info('Parsing dieharder result for ${test_case.description}...')
 
 		lines := result.output.split_into_lines()
 
 		if lines.len < 9 {
+			for idx, line in lines {
+				context.logger.info('> line $idx: $line')
+			}
 			context.logger.fatal('Unexpected output from dieharder')
 		}
 

@@ -7,7 +7,9 @@ import time
 fn store_entropy_results(mut context EvaluationContext) {
 	mut sw := time.new_stopwatch()
 
-	result := os.execute_or_panic('ent $context.data_file')
+	cmd := 'ent $context.data_file'
+	context.logger.info('Running ent: $cmd')
+	result := os.execute_or_panic(cmd)
 
 	context.ent_duration = sw.elapsed()
 
