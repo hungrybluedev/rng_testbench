@@ -6,6 +6,7 @@ import util
 fn store_classic_test_results(mut context EvaluationContext) {
 	input_types := [
 		util.InputType.one_byte,
+		util.InputType.upper_u16,
 		util.InputType.upper_u32,
 		util.InputType.upper_u64,
 		util.InputType.fraction,
@@ -24,6 +25,7 @@ fn store_classic_test_results(mut context EvaluationContext) {
 		} else {
 			context.logger.warn('Chi-square test failed.')
 		}
+		context.classic_count++
 
 		kp, km := st.kolsmir(mut context.rng, 1000, itype)
 
@@ -34,6 +36,7 @@ fn store_classic_test_results(mut context EvaluationContext) {
 		} else {
 			context.logger.warn('Kolmogorov-Smirnov test failed.')
 		}
+		context.classic_count++
 
 		serial_val := st.serial_chi_sq_val(mut context.rng, classic_iterations, itype)
 		serial_p := st.serial_chi_sq_p(serial_val)
@@ -46,6 +49,7 @@ fn store_classic_test_results(mut context EvaluationContext) {
 		} else {
 			context.logger.warn('Serial Chi-square test failed.')
 		}
+		context.classic_count++
 	}
 
 	context.classic_score = context.chisq_pass + context.kolsmir_pass + context.serial_pass
