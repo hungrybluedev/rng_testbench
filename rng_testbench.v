@@ -17,6 +17,7 @@ import myrngs.nothing
 
 const (
 	// Experiment parameters
+	keep_data             = os.getenv('KEEP_DATA').bool()
 	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '4' }).u64()
 	iteration_limit       = iterations + 1
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '4096' }).int()
@@ -176,9 +177,10 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 			store_classic_test_results(mut context)
 			context.logger.flush()
 		}
-
-		os.rmdir_all('data') or {}
-		os.mkdir('data') or {}
+		if !keep_data {
+			os.rmdir_all('data') or {}
+			os.mkdir('data') or {}
+		}
 	}
 
 	generate_report(contexts, timestamp)
@@ -224,7 +226,9 @@ fn initialize_directories() {
 
 	for directory in directories {
 		if directory !in keep {
-			os.rmdir_all(directory) or {}
+			if !keep_data {
+				os.rmdir_all(directory) or {}
+			}
 		}
 		os.mkdir(directory) or {}
 	}
