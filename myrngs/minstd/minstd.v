@@ -34,18 +34,18 @@ fn (mut rng MinStdRNG) internal_int() int {
 	return rng.seed
 }
 
-// byte returns a uniformly distributed pseudorandom 8-bit unsigned positive `byte`.
+// u8 returns a uniformly distributed pseudorandom 8-bit unsigned positive `u8`.
 [inline]
-pub fn (mut rng MinStdRNG) byte() byte {
+pub fn (mut rng MinStdRNG) u8() u8 {
 	if rng.bytes_left >= 1 {
 		rng.bytes_left -= 1
-		value := byte(rng.buffer)
+		value := u8(rng.buffer)
 		rng.buffer >>= 8
 		return value
 	}
 	rng.buffer = rng.internal_int()
 	rng.bytes_left = 2
-	value := byte(rng.buffer)
+	value := u8(rng.buffer)
 	rng.buffer >>= 8
 	return value
 }

@@ -8,7 +8,7 @@ pub struct NothingRNG {}
 pub fn (mut rng NothingRNG) seed(seed_data []u32) {
 }
 
-// byte returns a uniformly distributed pseudorandom 8-bit unsigned positive `byte`.
+// u8 returns a uniformly distributed pseudorandom 8-bit unsigned positive `u8`.
 [inline]
 pub fn (mut rng NothingRNG) u8() u8 {
 	return 4
