@@ -172,7 +172,9 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 		}
 
 		for name in enabled_generators_local {
-			store_classic_test_results(mut contexts['${name}_$iteration'])
+			mut context := contexts['${name}_$iteration']
+			store_classic_test_results(mut context)
+			context.logger.flush()
 		}
 
 		os.rmdir_all('data') or {}
@@ -201,7 +203,7 @@ fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp strin
 		}
 
 		for name in enabled_generators_local {
-			mut context :=contexts['${name}_$iteration']
+			mut context := contexts['${name}_$iteration']
 			store_burn_results(mut context)
 			context.logger.flush()
 		}
