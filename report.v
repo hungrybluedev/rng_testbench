@@ -120,7 +120,10 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 	// szip.zip_files(dump(os.walk_ext('logs', 'log')), 'results/logs ${timestamp}.zip') or {
 	// 	panic('Failed to zip logs')
 	// }
-	os.execute_or_panic('zip -r "results/logs ${timestamp}.zip" -r logs')
+	cmd := 'zip -r "results/logs ${timestamp}.zip" -r logs'
+	println('Zipping logs with: $cmd')
+	os.execute_or_panic(cmd)
+	println('... zipping done')
 }
 
 fn pretty_table_from_csv(path string) ?string {
