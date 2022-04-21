@@ -63,7 +63,7 @@ fn generate_data_file(mut context EvaluationContext) {
 	file_path := 'data/${context.name}_${context.iteration:02}.dat'
 	context.data_file = file_path
 
-	mut data_file := os.open_file(file_path, "w") or {
+	mut data_file := os.open_file(file_path, 'w') or {
 		context.logger.fatal('Could not open $file_path for writing')
 		return
 	}

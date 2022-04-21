@@ -17,7 +17,7 @@ import myrngs.nothing
 
 const (
 	// Experiment parameters
-	keep_data             = (os.getenv_opt('KEEP_DATA') or {'false'}).bool()
+	keep_data             = (os.getenv_opt('KEEP_DATA') or { 'false' }).bool()
 	iterations            = (os.getenv_opt('EXPERIMENT_ITERATIONS') or { '4' }).u64()
 	iteration_limit       = iterations + 1
 	data_file_bytes_count = (os.getenv_opt('EXPERIMENT_FILE_SIZE') or { '4096' }).int()
