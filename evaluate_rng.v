@@ -32,7 +32,7 @@ mut:
 fn obtain_logger(name string, iteration u64) log.Log {
 	mut logger := log.Log{
 		level: .info
-		output_label: '$name${iteration:02}.log'
+		output_label: '${name}${iteration:02}.log'
 	}
 
 	logger.set_output_path('logs')
@@ -48,7 +48,7 @@ fn initialize_rng_data(mut context EvaluationContext) {
 	if seed_len > 0 {
 		seed_data := seed.time_seed_array(seed_len)
 		context.rng.seed(seed_data)
-		context.logger.info('Seeded $context.name#${context.iteration:02} with $seed_data')
+		context.logger.info('Seeded ${context.name}#${context.iteration:02} with ${seed_data}')
 	}
 }
 
@@ -64,10 +64,10 @@ fn generate_data_file(mut context EvaluationContext) {
 	context.data_file = file_path
 
 	mut data_file := os.open_file(file_path, 'w') or {
-		context.logger.fatal('Could not open $file_path for writing')
+		context.logger.fatal('Could not open ${file_path} for writing')
 		return
 	}
-	context.logger.info('Writing data to $file_path')
+	context.logger.info('Writing data to ${file_path}')
 
 	mut bytes_remaining := data_file_bytes_count
 
@@ -76,18 +76,14 @@ fn generate_data_file(mut context EvaluationContext) {
 			context.buffer_size
 		} else {
 			bytes_remaining
-		}) or {
-			context.logger.fatal('Failed to generate data')
-			exit(1)
-		}
+		}) or { context.logger.fatal('Failed to generate data') }
 
 		bytes_remaining -= data_file.write(byte_data) or {
 			context.logger.fatal('Failed to write data')
-			exit(1)
 		}
 	}
 
-	context.logger.info('Wrote $data_file_bytes_count bytes to $file_path')
+	context.logger.info('Wrote ${data_file_bytes_count} bytes to ${file_path}')
 
 	data_file.close()
 }

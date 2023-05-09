@@ -26,7 +26,7 @@ pub fn chi_square_p(cv f64, dof int) f64 {
 	k := f64(dof) / 2.0
 	x := cv / 2.0
 
-	if (cv < 0) || dof < 1 {
+	if cv < 0 || dof < 1 {
 		return 0.0
 	}
 	if dof == 2 {

@@ -46,12 +46,12 @@ const (
 	}
 	enabled_generators = [
 		'mt19937',
-		'musl',
-		'sysrng',
-		'pcg32',
-		'wyrand',
-		'splitmix',
-		'xoshiro',
+		// 'musl',
+		// 'sysrng',
+		// 'pcg32',
+		// 'wyrand',
+		// 'splitmix',
+		// 'xoshiro',
 		'nothing',
 	]
 	program_modes      = [
@@ -80,7 +80,7 @@ fn main() {
 	}
 
 	if additional_args.len > 0 {
-		println('Unprocessed arguments:\n$additional_args.join_lines()')
+		println('Unprocessed arguments:\n${additional_args.join_lines()}')
 	}
 
 	mut generators := {
@@ -97,7 +97,7 @@ fn main() {
 		'nothing':  &rand.PRNG(&nothing.NothingRNG{})
 	}
 
-	timestamp := '($time.now().format())'
+	timestamp := '(${time.now().format()})'
 
 	match mode_str {
 		'report' {
@@ -106,31 +106,31 @@ fn main() {
 			// First, we check if we have any results to display already:
 			summaries := os.walk_ext('results', 'csv')
 			for summary in summaries {
-				println('Contents of $summary: ')
-				println(pretty_table_from_csv(summary) ?)
+				println('Contents of ${summary}: ')
+				println(pretty_table_from_csv(summary)!)
 			}
 
 			// Next, we try to send a sample email
 			if api_key != 'unset_api_key' {
-				send_test_mail() ?
+				send_test_mail()!
 			}
 		}
 		'runall' {
 			println('Running all!')
 
-			run_for_all_generators(generators, timestamp)
+			run_for_all_generators(generators, timestamp)!
 
 			if api_key != 'unset_api_key' {
-				send_detail_report_mail(timestamp) ?
+				send_detail_report_mail(timestamp)!
 			}
 		}
 		'burn' {
 			println('Measuring throughput of all enabled generators...')
 
-			run_burn_for_all_generators(generators, timestamp)
+			run_burn_for_all_generators(generators, timestamp)!
 
 			if api_key != 'unset_api_key' {
-				send_detail_report_mail(timestamp) ?
+				send_detail_report_mail(timestamp)!
 			}
 		}
 		else {
@@ -141,7 +141,7 @@ fn main() {
 	}
 }
 
-fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
+fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! {
 	mut contexts := map[string]&EvaluationContext{}
 
 	for iteration in 1 .. iteration_limit {
@@ -153,9 +153,9 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
-				rng: generators[name]
+				rng: generators[name] or { return error('Unsupported: ${name}') }
 			}
-			contexts['${name}_$iteration'] = context
+			contexts['${name}_${iteration}'] = context
 			initialize_rng_data(mut context)
 			generate_data_file(mut context)
 		}
@@ -163,17 +163,21 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 		mut evaluation_threads := []thread{}
 
 		for name in enabled_generators_local {
-			evaluation_threads << go evaluate_rng_file(mut contexts['${name}_$iteration'])
+			evaluation_threads << spawn evaluate_rng_file(mut contexts['${name}_${iteration}'] or {
+				return error('Invalid context.')
+			})
 		}
 
 		evaluation_threads.wait()
 
 		for name in enabled_generators_local {
-			store_burn_results(mut contexts['${name}_$iteration'])
+			store_burn_results(mut contexts['${name}_${iteration}'] or {
+				return error('Invalid context.')
+			})
 		}
 
 		for name in enabled_generators_local {
-			mut context := contexts['${name}_$iteration']
+			mut context := contexts['${name}_${iteration}'] or { return error('Invalid context.') }
 			store_classic_test_results(mut context)
 			context.logger.flush()
 		}
@@ -186,7 +190,7 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
 	generate_report(contexts, timestamp)
 }
 
-fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp string) {
+fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! {
 	mut contexts := map[string]&EvaluationContext{}
 
 	for iteration in 1 .. iteration_limit {
@@ -198,14 +202,16 @@ fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp strin
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
-				rng: generators[name]
+				rng: generators[name] or { return error('Unsupported: ${name}') }
 			}
-			contexts['${name}_$iteration'] = context
+			contexts['${name}_${iteration}'] = context
 			initialize_rng_data(mut context)
 		}
 
 		for name in enabled_generators_local {
-			mut context := contexts['${name}_$iteration']
+			mut context := contexts['${name}_${iteration}'] or {
+				return error('Context indexing error')
+			}
 			store_burn_results(mut context)
 			context.logger.flush()
 		}
@@ -236,7 +242,7 @@ fn initialize_directories() {
 
 fn default_system_name() string {
 	details := os.uname()
-	return '${details.sysname}_$details.machine'
+	return '${details.sysname}_${details.machine}'
 }
 
 struct ExternalTool {
@@ -263,7 +269,7 @@ fn check_external_programs_installed() {
 	for tool in tools {
 		result := os.execute(tool.command)
 		if result.exit_code != 0 {
-			println('External tool "$tool.name" could not be detected. Please install it.')
+			println('External tool "${tool.name}" could not be detected. Please install it.')
 			exit(1)
 		}
 	}

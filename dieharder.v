@@ -111,8 +111,8 @@ fn store_dieharder_results(mut context EvaluationContext) {
 	mut sw := time.new_stopwatch()
 
 	for test_case in dieharder_test_cases {
-		cmd := 'dieharder -g 201 -f $context.data_file -d $test_case.number'
-		context.logger.info('run dieharder with: $cmd')
+		cmd := 'dieharder -g 201 -f ${context.data_file} -d ${test_case.number}'
+		context.logger.info('run dieharder with: ${cmd}')
 		result := os.execute_or_panic(cmd)
 		context.logger.info('Parsing dieharder result for ${test_case.description}...')
 
@@ -120,7 +120,7 @@ fn store_dieharder_results(mut context EvaluationContext) {
 
 		if lines.len < 9 {
 			for idx, line in lines {
-				context.logger.info('> line $idx: $line')
+				context.logger.info('> line ${idx}: ${line}')
 			}
 			context.logger.fatal('Unexpected output from dieharder')
 		}
@@ -135,10 +135,10 @@ fn store_dieharder_results(mut context EvaluationContext) {
 
 			context.logger.info(result_line)
 			if outcome == 'PASSED' {
-				context.logger.info('$test_case.description: PASSED ($p_value)')
+				context.logger.info('${test_case.description}: PASSED (${p_value})')
 				context.dhr_pass += 1
 			} else {
-				context.logger.warn('$test_case.description: $outcome ($p_value)')
+				context.logger.warn('${test_case.description}: ${outcome} (${p_value})')
 				for output_line in lines {
 					context.logger.warn(output_line)
 				}
@@ -153,13 +153,13 @@ fn store_dieharder_results(mut context EvaluationContext) {
 
 	context.dhr_duration = sw.elapsed()
 
-	context.logger.info('Dieharder test suite took $context.dhr_duration.seconds() seconds')
+	context.logger.info('Dieharder test suite took ${context.dhr_duration.seconds()} seconds')
 
-	context.logger.info('dhr pass: $context.dhr_pass')
-	context.logger.info('dhr weak: $context.dhr_weak')
-	context.logger.info('dhr fail: $context.dhr_fail')
+	context.logger.info('dhr pass: ${context.dhr_pass}')
+	context.logger.info('dhr weak: ${context.dhr_weak}')
+	context.logger.info('dhr fail: ${context.dhr_fail}')
 
 	score := 2 * context.dhr_pass + context.dhr_weak - 2 * context.dhr_fail
-	context.logger.info('dhr score: $score')
+	context.logger.info('dhr score: ${score}')
 	context.dhr_score = score
 }

@@ -88,14 +88,14 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 	buffer.writeln('')
 
 	for name, result in results {
-		buffer.write_string('$name')
+		buffer.write_string('${name}')
 
 		if output.report_ent {
 			buffer.write_string(',${result.ent_norm:.4f}')
 		}
 
 		if output.report_dhr {
-			buffer.write_string(',$result.dhr_score')
+			buffer.write_string(',${result.dhr_score}')
 		}
 
 		if output.report_burn {
@@ -121,13 +121,13 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 	// 	panic('Failed to zip logs')
 	// }
 	cmd := 'zip -r "results/logs ${timestamp}.zip" -r logs'
-	println('Zipping logs with: $cmd')
+	println('Zipping logs with: ${cmd}')
 	os.execute_or_panic(cmd)
 	println('... zipping done')
 }
 
-fn pretty_table_from_csv(path string) ?string {
-	lines := os.read_lines(path) ?
+fn pretty_table_from_csv(path string) !string {
+	lines := os.read_lines(path)!
 
 	if lines.len < 1 {
 		return error('CSV should have at least one line')
@@ -136,7 +136,7 @@ fn pretty_table_from_csv(path string) ?string {
 	header := lines[0].split(',')
 	column_count := header.len
 
-	mut column_widths := []int{len: column_count, init: header[it].len}
+	mut column_widths := []int{len: column_count, init: header[index].len}
 
 	for line in lines[1..] {
 		values := line.split(',').map(it.trim_space())
@@ -150,7 +150,7 @@ fn pretty_table_from_csv(path string) ?string {
 		}
 	}
 
-	single_line_length := arrays.sum(column_widths) ? + (column_count + 1) * 3 - 4
+	single_line_length := arrays.sum(column_widths)! + (column_count + 1) * 3 - 4
 
 	horizontal_line := '+' + strings.repeat(`-`, single_line_length) + '+'
 	mut buffer := strings.new_builder(lines.len * single_line_length)
@@ -186,35 +186,35 @@ fn pretty_table_from_csv(path string) ?string {
 	return buffer.str()
 }
 
-fn send_detail_report_mail(timestamp string) ? {
-	pretty_table := pretty_table_from_csv('results/summary ${timestamp}.csv') ?
-	subject := 'Experiment Result Summary ($time.now().format())'
-	body := 'Summary of experiment results on $system_name
+fn send_detail_report_mail(timestamp string) ! {
+	pretty_table := pretty_table_from_csv('results/summary ${timestamp}.csv')!
+	subject := 'Experiment Result Summary (${time.now().format()})'
+	body := 'Summary of experiment results on ${system_name}
 
-Date and Time: $timestamp
+Date and Time: ${timestamp}
 
-$pretty_table
+${pretty_table}
 '
-	send_mail(subject, body) ?
+	send_mail(subject, body)!
 }
 
-fn send_test_mail() ? {
+fn send_test_mail() ! {
 	result := os.execute_or_panic('v doctor')
 	body := 'Sample email containing metadata on V installation and hardware information.
-System: $system_name
+System: ${system_name}
 Results of "v doctor":
-$result.output
+${result.output}
 '
-	send_mail('Test email from RNG Testbench', body) ?
+	send_mail('Test email from RNG Testbench', body)!
 }
 
-fn send_mail(subject string, body string) ? {
+fn send_mail(subject string, body string) ! {
 	host := 'https://api.elasticemail.com/v2/email/send'
 
-	url := '$host?apiKey=$api_key&to=$recipients&from=$from_email&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
+	url := '${host}?apiKey=${api_key}&to=${recipients}&from=${from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
 
-	response := http.post_json(url, '{Content-Length: $url.len}') ?
+	response := http.post_json(url, '{Content-Length: ${url.len}}')!
 
-	println(response.text)
+	println(response.body)
 	println('Mail sent!')
 }
