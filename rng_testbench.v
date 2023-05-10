@@ -61,6 +61,48 @@ const (
 	]
 )
 
+fn new_generator(name string) !&rand.PRNG {
+	return match name {
+		'musl' {
+			&rand.PRNG(&musl.MuslRNG{})
+		}
+		'pcg32' {
+			&rand.PRNG(&pcg32.PCG32RNG{})
+		}
+		'mt19937' {
+			&rand.PRNG(&mt19937.MT19937RNG{})
+		}
+		'wyrand' {
+			&rand.PRNG(&wyrand.WyRandRNG{})
+		}
+		'splitmix' {
+			&rand.PRNG(&splitmix64.SplitMix64RNG{})
+		}
+		'xoshiro' {
+			&rand.PRNG(&xoshiro.X256PlusPlusRNG{})
+		}
+		'sysrng' {
+			&rand.PRNG(&sys.SysRNG{})
+		}
+		'nothing' {
+			&rand.PRNG(&nothing.NothingRNG{})
+		}
+		else {
+			return error('Unsupported generator: ${name}')
+		}
+	}
+
+	// // Implementation issues. Enable after fix
+	// 'mt19937':  new_generator[mt19937.MT19937RNG]()
+	// 'wyrand':   new_generator[wyrand.WyRandRNG]()
+	// 'splitmix': new_generator[splitmix64.SplitMix64RNG]()
+	// // This takes a long time to run, so use smaller sizes on this
+	// // 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
+	// 'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
+	// 'sysrng':   &rand.PRNG(&sys.SysRNG{})
+	// 'nothing':  &rand.PRNG(&nothing.NothingRNG{})
+}
+
 fn main() {
 	initialize_directories()
 	check_external_programs_installed()
@@ -83,19 +125,19 @@ fn main() {
 		println('Unprocessed arguments:\n${additional_args.join_lines()}')
 	}
 
-	mut generators := {
-		'musl':     &rand.PRNG(&musl.MuslRNG{})
-		'pcg32':    &rand.PRNG(&pcg32.PCG32RNG{})
-		// Implementation issues. Enable after fix
-		'mt19937':  &rand.PRNG(&mt19937.MT19937RNG{})
-		'wyrand':   &rand.PRNG(&wyrand.WyRandRNG{})
-		'splitmix': &rand.PRNG(&splitmix64.SplitMix64RNG{})
-		// This takes a long time to run, so use smaller sizes on this
-		// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
-		'xoshiro':  &rand.PRNG(&xoshiro.X256PlusPlusRNG{})
-		'sysrng':   &rand.PRNG(&sys.SysRNG{})
-		'nothing':  &rand.PRNG(&nothing.NothingRNG{})
-	}
+	// mut generators := [
+	// 	'musl',
+	// 	'pcg32'
+	// 	// Implementation issues. Enable after fix
+	// 	'mt19937',
+	// 	'wyrand',
+	// 	'splitmix'
+	// 	// This takes a long time to run, so use smaller sizes on this
+	// 	// 'crypto':   &rand.PRNG(&cryptorng.CryptoRNG{})
+	// 	'xoshiro',
+	// 	'sysrng',
+	// 	'nothing',
+	// ]
 
 	timestamp := '(${time.now().format()})'
 
@@ -118,7 +160,7 @@ fn main() {
 		'runall' {
 			println('Running all!')
 
-			run_for_all_generators(generators, timestamp)!
+			run_for_all_generators(timestamp)!
 
 			if api_key != 'unset_api_key' {
 				send_detail_report_mail(timestamp)!
@@ -127,7 +169,7 @@ fn main() {
 		'burn' {
 			println('Measuring throughput of all enabled generators...')
 
-			run_burn_for_all_generators(generators, timestamp)!
+			run_burn_for_all_generators(timestamp)!
 
 			if api_key != 'unset_api_key' {
 				send_detail_report_mail(timestamp)!
@@ -141,7 +183,7 @@ fn main() {
 	}
 }
 
-fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! {
+fn run_for_all_generators(timestamp string) ! {
 	mut contexts := map[string]&EvaluationContext{}
 
 	for iteration in 1 .. iteration_limit {
@@ -153,7 +195,7 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! 
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
-				rng: generators[name] or { return error('Unsupported: ${name}') }
+				rng: new_generator(name)!
 			}
 			contexts['${name}_${iteration}'] = context
 			initialize_rng_data(mut context)
@@ -168,29 +210,28 @@ fn run_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! 
 			})
 		}
 
-		evaluation_threads.wait()
-
 		for name in enabled_generators_local {
-			store_burn_results(mut contexts['${name}_${iteration}'] or {
+			evaluation_threads << spawn store_burn_results(mut contexts['${name}_${iteration}'] or {
 				return error('Invalid context.')
 			})
 		}
 
 		for name in enabled_generators_local {
 			mut context := contexts['${name}_${iteration}'] or { return error('Invalid context.') }
-			store_classic_test_results(mut context)
+			evaluation_threads << spawn store_classic_test_results(mut context)
 			context.logger.flush()
 		}
 		if !keep_data {
 			os.rmdir_all('data') or {}
 			os.mkdir('data') or {}
 		}
+		evaluation_threads.wait()
 	}
 
 	generate_report(contexts, timestamp)
 }
 
-fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp string) ! {
+fn run_burn_for_all_generators(timestamp string) ! {
 	mut contexts := map[string]&EvaluationContext{}
 
 	for iteration in 1 .. iteration_limit {
@@ -202,7 +243,7 @@ fn run_burn_for_all_generators(generators map[string]&rand.PRNG, timestamp strin
 			mut context := &EvaluationContext{
 				name: name
 				iteration: iteration
-				rng: generators[name] or { return error('Unsupported: ${name}') }
+				rng: new_generator(name)!
 			}
 			contexts['${name}_${iteration}'] = context
 			initialize_rng_data(mut context)
