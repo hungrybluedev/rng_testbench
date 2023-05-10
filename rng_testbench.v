@@ -210,12 +210,14 @@ fn run_for_all_generators(timestamp string) ! {
 			})
 		}
 
+		evaluation_threads.wait()
+
 		for name in enabled_generators_local {
-			evaluation_threads << spawn store_burn_results(mut contexts['${name}_${iteration}'] or {
+			store_burn_results(mut contexts['${name}_${iteration}'] or {
 				return error('Invalid context.')
 			})
 		}
-		evaluation_threads.wait()
+
 		evaluation_threads = []thread{}
 
 		for name in enabled_generators_local {
