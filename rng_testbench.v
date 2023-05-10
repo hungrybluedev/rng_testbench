@@ -191,6 +191,8 @@ fn run_for_all_generators(timestamp string) ! {
 			panic('Internal error: could not shuffle array. Please file a bug report.')
 		}
 
+		mut evaluation_threads := []thread{}
+
 		for name in enabled_generators_local {
 			mut context := &EvaluationContext{
 				name: name
@@ -199,10 +201,11 @@ fn run_for_all_generators(timestamp string) ! {
 			}
 			contexts['${name}_${iteration}'] = context
 			initialize_rng_data(mut context)
-			generate_data_file(mut context)
+			evaluation_threads << spawn generate_data_file(mut context)
 		}
 
-		mut evaluation_threads := []thread{}
+		evaluation_threads.wait()
+		evaluation_threads = []thread{}
 
 		for name in enabled_generators_local {
 			evaluation_threads << spawn evaluate_rng_file(mut contexts['${name}_${iteration}'] or {
