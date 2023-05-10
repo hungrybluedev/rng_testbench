@@ -215,6 +215,8 @@ fn run_for_all_generators(timestamp string) ! {
 				return error('Invalid context.')
 			})
 		}
+		evaluation_threads.wait()
+		evaluation_threads = []thread{}
 
 		for name in enabled_generators_local {
 			mut context := contexts['${name}_${iteration}'] or { return error('Invalid context.') }
