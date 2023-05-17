@@ -14,7 +14,8 @@ fn store_classic_test_results(mut context EvaluationContext) {
 
 	for itype in input_types {
 		context.logger.info('Testing input type: ${itype}')
-		chi_sq_value := st.chi_square_value(mut context.rng, classic_iterations, itype)
+		chi_sq_value := st.chi_square_value(mut context.rng, parameters.classic_iterations,
+			itype)
 		chi_sq_p := st.chi_square_p(chi_sq_value, 255)
 
 		context.logger.info('Chi-square value: ${chi_sq_value}')
@@ -38,7 +39,8 @@ fn store_classic_test_results(mut context EvaluationContext) {
 		}
 		context.classic_count++
 
-		serial_val := st.serial_chi_sq_val(mut context.rng, classic_iterations, itype)
+		serial_val := st.serial_chi_sq_val(mut context.rng, parameters.classic_iterations,
+			itype)
 		serial_p := st.serial_chi_sq_p(serial_val)
 
 		context.logger.info('Serial Test value: ${serial_val}')

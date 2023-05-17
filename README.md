@@ -8,7 +8,7 @@ Order of operations:
    iteration.
 2. Run `ent` on the file.
 3. Run all specified `dieharder` tests on the file if `ent` passes.
-4. Burn 1 billion bytes from each generator, for each iteration. Record the
+4. Burn 5 billion bytes from each generator, for each iteration. Record the
    timings and calculate throughput.
 5. Run one final suite of classical tests on the generator.
 
@@ -20,9 +20,8 @@ Order of operations:
    Otherwise, refer to their respective repositories:
    [ent](https://github.com/jj1bdx/ent) and
    [dieharder](https://github.com/seehuhn/dieharder).
-3. Modify `.env.sample` to create an `.env` file. Then run `source .env` to
-   load the environment variables. (This works on Unix-based systems,
-   so the analogous process needs to be followed on Windows).
+3. Optionally create a config.toml file based on the sample provided if
+   any of the settings need to be changed.
 
 ## Usage
 
@@ -31,7 +30,7 @@ Order of operations:
 Uncomment the required generators in the `enabled_generators` array in
 `rng_testbench.v`.
 
-It is recommended to use `v -gc boehm -prod .` to compile the program.
+It is recommended to use `v -prod .` to compile the program.
 
 Then run it using `time ./rng_testbench --mode runall`
 

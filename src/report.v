@@ -55,8 +55,8 @@ fn generate_report(contexts map[string]&EvaluationContext, timestamp string, out
 		results[context.name].classic_count += context.classic_count
 	}
 
-	iterations_f := f64(iterations)
-	burn_iterations_f := f64(burn_iterations)
+	iterations_f := f64(parameters.iterations)
+	burn_iterations_f := f64(parameters.burn_iterations)
 
 	for name in enabled_generators {
 		results[name].ent_norm /= iterations_f
@@ -189,7 +189,7 @@ fn pretty_table_from_csv(path string) !string {
 fn send_detail_report_mail(timestamp string) ! {
 	pretty_table := pretty_table_from_csv('results/summary ${timestamp}.csv')!
 	subject := 'Experiment Result Summary (${time.now().format()})'
-	body := 'Summary of experiment results on ${system_name}
+	body := 'Summary of experiment results on ${parameters.system_name}
 
 Date and Time: ${timestamp}
 
@@ -201,7 +201,7 @@ ${pretty_table}
 fn send_test_mail() ! {
 	result := os.execute_or_panic('v doctor')
 	body := 'Sample email containing metadata on V installation and hardware information.
-System: ${system_name}
+System: ${parameters.system_name}
 Results of "v doctor":
 ${result.output}
 '
@@ -211,7 +211,7 @@ ${result.output}
 fn send_mail(subject string, body string) ! {
 	host := 'https://api.elasticemail.com/v2/email/send'
 
-	url := '${host}?apiKey=${api_key}&to=${recipients}&from=${from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
+	url := '${host}?apiKey=${parameters.api_key}&to=${parameters.recipients}&from=${parameters.from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
 
 	response := http.post_json(url, '{Content-Length: ${url.len}}')!
 
