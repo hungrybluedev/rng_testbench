@@ -215,7 +215,7 @@ pub struct Person {
 }
 
 pub struct Message {
-	from      []Person [json: 'From']
+	from      Person   [json: 'From']
 	to        []Person [json: 'To']
 	subject   string   [json: 'Subject']
 	text_part string   [json: 'TextPart']
@@ -233,7 +233,6 @@ fn send_mail(subject string, body string) ! {
 	raw_recipients := parameters.recipients.split(';')
 	clean_body := body.replace('\n', '\\n')
 
-
 	mut recipients := []Person{}
 	for index, r in raw_recipients {
 		rname := r.all_before(' <').trim_space()
@@ -248,16 +247,14 @@ fn send_mail(subject string, body string) ! {
 		sandbox_mode: true
 		messages: [
 			Message{
-				from: [
-					Person{
-						email: parameters.from_email
-						name: 'V RNG Test Bench on ' + parameters.system_name
-					}
-				]
+				from: Person{
+					email: parameters.from_email
+					name: 'V RNG Test Bench on ' + parameters.system_name
+				}
 				to: recipients
 				subject: subject
 				text_part: clean_body
-			}
+			},
 		]
 	}
 	data_json := json2.encode[MailJet](mailjet_info)
