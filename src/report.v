@@ -7,6 +7,7 @@ import strings
 // import szip
 import time
 import encoding.base64
+import x.json2
 
 struct ResultStruct {
 	name string
@@ -208,6 +209,23 @@ ${result.output}
 	send_mail('Test email from RNG Testbench', body)!
 }
 
+struct Person {
+	email string [json: 'Email']
+	name  string [json: 'Name']
+}
+
+struct Message {
+	from      []Person [json: 'From']
+	to        []Person [json: 'To']
+	subject   string   [json: 'Subject']
+	text_part string   [json: 'TextPart']
+}
+
+struct MailJet {
+	sandbox_mode bool      [json: 'SandboxMode']
+	messages     []Message [json: 'Messages']
+}
+
 fn send_mail(subject string, body string) ! {
 	host := 'https://api.mailjet.com/v3.1/send'
 	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
@@ -215,19 +233,34 @@ fn send_mail(subject string, body string) ! {
 	raw_recipients := parameters.recipients.split(';')
 	clean_body := body.replace('\n', '\\n')
 
-	mut to_buffer := strings.new_builder(16)
 
+	mut recipients := []Person{}
 	for index, r in raw_recipients {
-		if index != 0 {
-			to_buffer.write_string(',\n')
-		}
-		to_buffer.write_string('{\n')
 		rname := r.all_before(' <').trim_space()
 		email := r.all_after_first(' <').trim('>')
-		to_buffer.write_string('\t"Email": "${email}",\n')
-		to_buffer.write_string('\t"Name": "${rname}"\n')
-		to_buffer.write_string('}')
+		recipients << Person{
+			email: email
+			name: rname
+		}
 	}
+
+	mailjet_info := MailJet{
+		sandbox_mode: true
+		messages: [
+			Message{
+				from: [
+					Person{
+						email: parameters.from_email
+						name: 'V RNG Test Bench on ' + parameters.system_name
+					}
+				]
+				to: recipients
+				subject: subject
+				text_part: clean_body
+			}
+		]
+	}
+	data_json := json2.encode[MailJet](mailjet_info)
 
 	mut request := http.Request{
 		method: .post
@@ -237,26 +270,7 @@ fn send_mail(subject string, body string) ! {
 		})
 		url: host
 		user_agent: user_agent
-		data: '
-{
-	"SandboxMode": "true",
-	"Messages": [
-		{
-			"From": [
-				{
-					"Email": "${parameters.from_email}",
-					"Name": "${user_agent}"
-				}
-			],
-			"Subject": "${subject}"
-			"TextPart": "${clean_body}"
-			"To": [
-				${to_buffer.str()}
-			]
-		}
-	]
-}
-'
+		data: data_json
 	}
 
 	dump(request)
