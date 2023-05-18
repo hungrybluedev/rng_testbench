@@ -273,5 +273,8 @@ fn send_mail(subject string, body string) ! {
 	if response.status_code != 200 {
 		println(response)
 		panic('\n\nError while trying to send email.')
+	} else {
+		println('Email send successfully.\n')
+		println(mailjet_info)
 	}
 }
