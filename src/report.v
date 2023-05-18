@@ -275,6 +275,6 @@ fn send_mail(subject string, body string) ! {
 		panic('\n\nError while trying to send email.')
 	} else {
 		println('Email send successfully.\n')
-		println(mailjet_info)
+		println(data_json)
 	}
 }
