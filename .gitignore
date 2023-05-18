@@ -12,5 +12,5 @@ old
 data
 results
 logs
-.config.toml
+config.toml
 .idea
