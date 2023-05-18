@@ -209,19 +209,19 @@ ${result.output}
 	send_mail('Test email from RNG Testbench', body)!
 }
 
-struct Person {
+pub struct Person {
 	email string [json: 'Email']
 	name  string [json: 'Name']
 }
 
-struct Message {
+pub struct Message {
 	from      []Person [json: 'From']
 	to        []Person [json: 'To']
 	subject   string   [json: 'Subject']
 	text_part string   [json: 'TextPart']
 }
 
-struct MailJet {
+pub struct MailJet {
 	sandbox_mode bool      [json: 'SandboxMode']
 	messages     []Message [json: 'Messages']
 }
