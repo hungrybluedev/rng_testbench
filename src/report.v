@@ -2,11 +2,11 @@ module main
 
 import arrays
 import net.http
-import net.urllib
 import os
 import strings
 // import szip
 import time
+import encoding.base64
 
 struct ResultStruct {
 	name string
@@ -209,12 +209,61 @@ ${result.output}
 }
 
 fn send_mail(subject string, body string) ! {
-	host := 'https://api.elasticemail.com/v2/email/send'
+	host := 'https://api.mailjet.com/v3.1/send'
+	//
+	// url := '${host}?apiKey=${parameters.api_key}&to=${parameters.recipients}&from=${parameters.from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
+	//
+	// response := http.post_json(url, '{Content-Length: ${url.len}}')!
+	//
+	// println(response.body)
+	// println('Mail sent!')
+	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
+	user_agent := 'V RNG TestBench on ${parameters.system_name}'
+	raw_recipients := parameters.recipients.split(';')
 
-	url := '${host}?apiKey=${parameters.api_key}&to=${parameters.recipients}&from=${parameters.from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
+	mut to_buffer := strings.new_builder(16)
 
-	response := http.post_json(url, '{Content-Length: ${url.len}}')!
+	for index, r in raw_recipients {
+		if index != 0 {
+			to_buffer.write_string(',\n')
+		}
+		to_buffer.write_string('{\n')
+		name := r.all_before(' <').trim_space()
+		email := r.all_after_first(' <').trim('>')
+		to_buffer.write_string('\t"Email": ${email},\n')
+		to_buffer.write_string('\t"Name": ${name}\n')
+		to_buffer.write_string('}')
+	}
 
-	println(response.body)
-	println('Mail sent!')
+	mut request := http.Request{
+		method: .post
+		header: http.new_header_from_map({
+			http.CommonHeader.authorization: 'Basic ${auth_string}'
+			http.CommonHeader.content_type:  'application/json'
+		})
+		url: host
+		user_agent: user_agent
+		data: '
+{
+	"SandboxMode": "true",
+	"Messages": [
+		{
+			"From": [
+				{
+					"Email": "${parameters.from_email}",
+					"Name": "${user_agent}"
+				}
+			],
+			"Subject": "${subject}"
+			"TextPart": "${body}"
+			"To": [
+				${to_buffer.str()}
+			]
+		}
+	]
+}
+'
+	}
+
+	dump(request)
 }

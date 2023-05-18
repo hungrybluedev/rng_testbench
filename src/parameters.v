@@ -15,6 +15,7 @@ struct ExperimentParameters {
 	from_email  string = 'unset_from_email'
 	recipients  string = 'unset_recipients'
 	api_key     string = 'unset_api_key'
+	secret_key  string = 'unset_secret_key'
 }
 
 fn get_experiment_parameters() ExperimentParameters {
@@ -39,6 +40,7 @@ fn get_experiment_parameters() ExperimentParameters {
 		from_email := (mail.value_opt('from_email') or { 'unset_from_email' }).string()
 		recipients := (mail.value_opt('recipients') or { 'unset_recipients' }).string()
 		api_key := (mail.value_opt('api_key') or { 'unset_api_key' }).string()
+		secret_key := (mail.value_opt('secret_key') or { 'unset_secret_key' }).string()
 
 		ExperimentParameters{
 			keep_data: keep_data
@@ -51,6 +53,7 @@ fn get_experiment_parameters() ExperimentParameters {
 			from_email: from_email
 			recipients: recipients
 			api_key: api_key
+			secret_key: secret_key
 		}
 	} else {
 		ExperimentParameters{}
