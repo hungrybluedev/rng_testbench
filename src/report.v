@@ -223,8 +223,8 @@ fn send_mail(subject string, body string) ! {
 		to_buffer.write_string('{\n')
 		rname := r.all_before(' <').trim_space()
 		email := r.all_after_first(' <').trim('>')
-		to_buffer.write_string('\t"Email": ${email},\n')
-		to_buffer.write_string('\t"Name": ${rname}\n')
+		to_buffer.write_string('\t"Email": "${email}",\n')
+		to_buffer.write_string('\t"Name": "${rname}"\n')
 		to_buffer.write_string('}')
 	}
 
@@ -248,7 +248,7 @@ fn send_mail(subject string, body string) ! {
 				}
 			],
 			"Subject": "${subject}"
-			"TextPart": "${body}"
+			"TextPart": "${body.replace('\n', '\\n')}"
 			"To": [
 				${to_buffer.str()}
 			]
