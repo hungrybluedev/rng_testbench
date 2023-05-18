@@ -12,7 +12,5 @@ old
 data
 results
 logs
-
-# Environment Variables
-.env
+.config.toml
 .idea
