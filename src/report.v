@@ -259,8 +259,6 @@ fn send_mail(subject string, body string) ! {
 	}
 
 	dump(request)
-	response := request.do() or {
-		panic(err)
-	}
+	response := request.do() or { panic(err) }
 	dump(response)
 }

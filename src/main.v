@@ -81,7 +81,6 @@ fn main() {
 			}
 
 			dump(parameters)
-
 			// Next, we try to send a sample email
 			if parameters.api_key != 'unset_api_key' {
 				send_test_mail()!
