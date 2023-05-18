@@ -234,9 +234,9 @@ fn send_mail(subject string, body string) ! {
 	clean_body := body.replace('\n', '\\n')
 
 	mut recipients := []Person{}
-	for index, r in raw_recipients {
-		rname := r.all_before(' <').trim_space()
-		email := r.all_after_first(' <').trim('>')
+	for rec in raw_recipients {
+		rname := rec.all_before(' <').trim_space()
+		email := rec.all_after_first(' <').trim('>')
 		recipients << Person{
 			email: email
 			name: rname
@@ -270,7 +270,9 @@ fn send_mail(subject string, body string) ! {
 		data: data_json
 	}
 
-	dump(request)
 	response := request.do() or { panic(err) }
-	dump(response)
+	if response.status_code != .ok {
+		println(response)
+		panic('\n\nError while trying to send email.')
+	}
 }
