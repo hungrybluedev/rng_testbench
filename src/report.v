@@ -210,13 +210,6 @@ ${result.output}
 
 fn send_mail(subject string, body string) ! {
 	host := 'https://api.mailjet.com/v3.1/send'
-	//
-	// url := '${host}?apiKey=${parameters.api_key}&to=${parameters.recipients}&from=${parameters.from_email}&fromName=RNG Testbench&subject=${urllib.query_escape(subject)}&bodyText=${urllib.query_escape(body)}'
-	//
-	// response := http.post_json(url, '{Content-Length: ${url.len}}')!
-	//
-	// println(response.body)
-	// println('Mail sent!')
 	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
 	user_agent := 'V RNG TestBench on ${parameters.system_name}'
 	raw_recipients := parameters.recipients.split(';')
@@ -266,4 +259,6 @@ fn send_mail(subject string, body string) ! {
 	}
 
 	dump(request)
+	response := request.do()!
+	dump(response)
 }
