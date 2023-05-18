@@ -231,7 +231,6 @@ fn send_mail(subject string, body string) ! {
 	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
 	user_agent := 'V RNG TestBench on ${parameters.system_name}'
 	raw_recipients := parameters.recipients.split(';')
-	clean_body := body.replace('\n', '\\n')
 
 	mut recipients := []Person{}
 	for rec in raw_recipients {
@@ -252,7 +251,7 @@ fn send_mail(subject string, body string) ! {
 				}
 				to: recipients
 				subject: subject
-				text_part: clean_body
+				text_part: body
 			},
 		]
 	}
