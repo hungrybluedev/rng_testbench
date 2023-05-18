@@ -244,7 +244,6 @@ fn send_mail(subject string, body string) ! {
 	}
 
 	mailjet_info := MailJet{
-		sandbox_mode: true
 		messages: [
 			Message{
 				from: Person{
