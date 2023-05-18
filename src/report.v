@@ -248,7 +248,7 @@ fn send_mail(subject string, body string) ! {
 				}
 			],
 			"Subject": "${subject}"
-			"TextPart": "${body.replace('\n', '\\n')}"
+			"TextPart": "${body}"
 			"To": [
 				${to_buffer.str()}
 			]
