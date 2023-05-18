@@ -213,6 +213,7 @@ fn send_mail(subject string, body string) ! {
 	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
 	user_agent := 'V RNG TestBench on ${parameters.system_name}'
 	raw_recipients := parameters.recipients.split(';')
+	clean_body := body.replace('\n', '\\n')
 
 	mut to_buffer := strings.new_builder(16)
 
@@ -248,7 +249,7 @@ fn send_mail(subject string, body string) ! {
 				}
 			],
 			"Subject": "${subject}"
-			"TextPart": "${body}"
+			"TextPart": "${clean_body}"
 			"To": [
 				${to_buffer.str()}
 			]
