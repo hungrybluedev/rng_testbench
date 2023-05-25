@@ -217,7 +217,7 @@ pub struct Mail {
 	sender       Person
 	to           []Person
 	subject      string
-	html_content string   [json: 'htmlContent']
+	text_content string   [json: 'textContent']
 }
 
 fn send_mail(subject string, body string) ! {
@@ -242,7 +242,7 @@ fn send_mail(subject string, body string) ! {
 		}
 		to: recipients
 		subject: subject
-		html_content: '<html><head></head><body><p>Hello,</p>This is my first transactional email sent from Brevo.</p></body></html>'
+		text_content: body
 	}
 	data_json := json2.encode[Mail](mail_message)
 
@@ -259,7 +259,7 @@ fn send_mail(subject string, body string) ! {
 	}
 
 	response := request.do() or { panic(err) }
-	if response.status_code != 200 {
+	if response.status_code / 100 != 2 {
 		println(response)
 		panic('\n\nError while trying to send email.')
 	} else {
