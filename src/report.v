@@ -6,8 +6,6 @@ import os
 import strings
 // import szip
 import time
-import encoding.base64
-import x.json2
 
 struct ResultStruct {
 	name string
@@ -210,25 +208,19 @@ ${result.output}
 }
 
 pub struct Person {
-	email string [json: 'Email']
-	name  string [json: 'Name']
+	email string
+	name  string
 }
 
-pub struct Message {
-	from      Person   [json: 'From']
-	to        []Person [json: 'To']
-	subject   string   [json: 'Subject']
-	text_part string   [json: 'TextPart']
-}
-
-pub struct MailJet {
-	sandbox_mode bool      [json: 'SandboxMode']
-	messages     []Message [json: 'Messages']
+pub struct Mail {
+	sender       Person
+	to           []Person
+	subject      string
+	html_content string   [json: 'htmlContent']
 }
 
 fn send_mail(subject string, body string) ! {
-	host := 'https://api.mailjet.com/v3.1/send'
-	auth_string := base64.encode_str(parameters.api_key + ':' + parameters.secret_key)
+	host := 'https://api.brevo.com/v3/smtp/email'
 	user_agent := 'V RNG TestBench on ${parameters.system_name}'
 	raw_recipients := parameters.recipients.split(';')
 
@@ -242,27 +234,23 @@ fn send_mail(subject string, body string) ! {
 		}
 	}
 
-	mailjet_info := MailJet{
-		messages: [
-			Message{
-				from: Person{
-					email: parameters.from_email
-					name: 'V RNG Test Bench on ' + parameters.system_name
-				}
-				to: recipients
-				subject: subject
-				text_part: body
-			},
-		]
+	mail_message := Mail{
+		sender: Person{
+			name: user_agent
+			email: parameters.from_email
+		}
+		to: recipients
+		subject: subject
+		html_content: '<html><head></head><body><p>Hello,</p>This is my first transactional email sent from Brevo.</p></body></html>'
 	}
-	data_json := json2.encode[MailJet](mailjet_info)
 
 	mut request := http.Request{
 		method: .post
-		header: http.new_header_from_map({
-			http.CommonHeader.authorization: 'Basic ${auth_string}'
-			http.CommonHeader.content_type:  'application/json'
-		})
+		header: http.new_custom_header_from_map({
+			http.CommonHeader.accept.str():       'application/json'
+			http.CommonHeader.content_type.str(): 'application/json'
+			'api-key':                            parameters.api_key
+		})!
 		url: host
 		user_agent: user_agent
 		data: data_json
