@@ -1,4 +1,4 @@
-module xoshiro
+module xoshiro256pp
 
 import rand.seed
 
@@ -14,7 +14,7 @@ mut:
 
 // seed is used to seed the RNG.
 pub fn (mut rng X256PlusPlusRNG) seed(seed_data []u32) {
-	if seed_data.len != xoshiro.seed_len {
+	if seed_data.len != xoshiro256pp.seed_len {
 		panic('seed data must have 8 elements')
 	}
 	rng.state[0] = u64(seed_data[0]) ^ (u64(seed_data[1]) << 32)

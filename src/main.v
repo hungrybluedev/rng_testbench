@@ -8,7 +8,8 @@ import rand.pcg32
 import rand.sys
 import rand.musl
 import rand.mt19937
-import myrngs.xoshiro
+import rand.xoroshiro128pp
+import myrngs.xoshiro256pp
 import time
 import rand
 import myrngs.nothing
@@ -20,13 +21,14 @@ const (
 	parameters   = get_experiment_parameters()
 
 	seed_len_map = {
-		'mt19937':  mt19937.seed_len
-		'musl':     musl.seed_len
-		'sysrng':   sys.seed_len
-		'pcg32':    pcg32.seed_len
-		'wyrand':   wyrand.seed_len
-		'splitmix': splitmix64.seed_len
-		'xoshiro':  xoshiro.seed_len
+		'mt19937':        mt19937.seed_len
+		'musl':           musl.seed_len
+		'sysrng':         sys.seed_len
+		'pcg32':          pcg32.seed_len
+		'wyrand':         wyrand.seed_len
+		'splitmix':       splitmix64.seed_len
+		'xoroshiro128pp': xoroshiro128pp.seed_len
+		'xoshiro256pp':   xoshiro256pp.seed_len
 	}
 	enabled_generators = [
 		'mt19937',
@@ -35,7 +37,8 @@ const (
 		'pcg32',
 		'wyrand',
 		'splitmix',
-		'xoshiro',
+		'xoroshiro128pp',
+		'xoshiro256pp',
 		'nothing',
 	]
 	program_modes      = [
@@ -256,8 +259,11 @@ fn new_generator(name string) !&rand.PRNG {
 		'splitmix' {
 			&rand.PRNG(&splitmix64.SplitMix64RNG{})
 		}
-		'xoshiro' {
-			&rand.PRNG(&xoshiro.X256PlusPlusRNG{})
+		'xoroshiro128pp' {
+			&rand.PRNG(&xoroshiro128pp.XOROS128PPRNG{})
+		}
+		'xoshiro256pp' {
+			&rand.PRNG(&xoshiro256pp.X256PlusPlusRNG{})
 		}
 		'sysrng' {
 			&rand.PRNG(&sys.SysRNG{})
