@@ -6,6 +6,7 @@ import os
 import strings
 // import szip
 import time
+import x.json2
 
 struct ResultStruct {
 	name string
@@ -243,6 +244,7 @@ fn send_mail(subject string, body string) ! {
 		subject: subject
 		html_content: '<html><head></head><body><p>Hello,</p>This is my first transactional email sent from Brevo.</p></body></html>'
 	}
+	data_json := json2.encode[Mail](mail_message)
 
 	mut request := http.Request{
 		method: .post
