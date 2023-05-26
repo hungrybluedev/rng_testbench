@@ -20,7 +20,8 @@ Order of operations:
    Otherwise, refer to their respective repositories:
    [ent](https://github.com/jj1bdx/ent) and
    [dieharder](https://github.com/seehuhn/dieharder).
-3. Optionally create a config.toml file based on the sample provided if
+3. Install `zip` if you do not have it.
+4. Optionally create a config.toml file based on the sample provided if
    any of the settings need to be changed.
 
 ## Usage
@@ -28,7 +29,7 @@ Order of operations:
 ### Testing all generators
 
 Uncomment the required generators in the `enabled_generators` array in
-`rng_testbench.v`.
+`src/main.v`.
 
 It is recommended to use `v -prod .` to compile the program.
 
